@@ -1,8 +1,8 @@
 // Server-side load for workflow detail page.
 // Fetches the workflow with node status filtered to only the fields we display.
 import { env } from '$env/dynamic/private';
-import { error } from '@sveltejs/kit';
 import { createArgoClient } from '$lib/api/argo';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -19,7 +19,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			path: { namespace: params.namespace, name: params.name },
 			query: {
 				// Fetch only the fields needed for the detail view
-				fields: 'metadata.name,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
+				fields:
+					'metadata.name,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes,templateRef.template'
 			}
 		}
 	});
