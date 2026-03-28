@@ -4,6 +4,9 @@
 	import type { components } from '$lib/api/schema.d.ts';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
+	import { goto } from '$app/navigation';
+
+	let { workflows, namespace }: { workflows: Workflow[]; namespace: string } = $props();
 	import {
 		createColumnHelper,
 		createTable,
@@ -14,7 +17,6 @@
 
 	type Workflow = components['schemas']['io.argoproj.workflow.v1alpha1.Workflow'];
 
-	let { workflows }: { workflows: Workflow[] } = $props();
 
 	// --- Column definitions ---
 	const col = createColumnHelper<Workflow>();
@@ -110,7 +112,11 @@
 				</Table.Row>
 			{:else}
 				{#each table.getRowModel().rows as row}
-					<Table.Row>
+					{@const wfName = row.original.metadata?.name ?? ''}
+					<Table.Row
+						class="cursor-pointer"
+						onclick={() => goto(`/workflows/${namespace}/${wfName}`)}
+					>
 						{#each row.getVisibleCells() as cell}
 							<Table.Cell>
 								{#if cell.column.id === 'phase'}

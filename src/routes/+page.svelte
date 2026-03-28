@@ -11,5 +11,5 @@
 		<p class="text-muted-foreground text-sm">Namespace: {data.namespace}</p>
 	</div>
 
-	<WorkflowsTable workflows={data.workflows} />
+	<WorkflowsTable workflows={data.workflows} namespace={data.namespace} />
 </main>
