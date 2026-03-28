@@ -21,7 +21,7 @@ export const load: PageServerLoad = async () => {
 			path: { namespace },
 			query: {
 				// Restrict response to only the fields used in the table
-				fields: 'items.metadata.name,items.status.phase,items.status.startedAt,items.status.finishedAt'
+				fields: 'items.metadata.name,items.metadata.labels,items.status.phase,items.status.startedAt,items.status.finishedAt'
 			}
 		}
 	});

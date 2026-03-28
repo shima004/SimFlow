@@ -40,6 +40,21 @@
 			id: 'finishedAt',
 			header: 'Finished',
 			cell: (info) => (info.getValue() ? formatDate(info.getValue()) : '-')
+		}),
+		col.accessor((w) => w.metadata?.labels?.['map'] ?? '-', {
+			id: 'map',
+			header: 'Map',
+			cell: (info) => info.getValue()
+		}),
+		col.accessor((w) => w.metadata?.labels?.['agent'] ?? '-', {
+			id: 'agent',
+			header: 'Agent',
+			cell: (info) => info.getValue()
+		}),
+		col.accessor((w) => w.metadata?.labels?.['score'] ?? '-', {
+			id: 'score',
+			header: 'Score',
+			cell: (info) => info.getValue()
 		})
 	];
 
