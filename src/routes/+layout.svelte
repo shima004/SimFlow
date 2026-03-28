@@ -12,6 +12,7 @@
 		<li><a href="/" class="hover:text-foreground text-muted-foreground">Workflows</a></li>
 		<li><a href="/maps" class="hover:text-foreground text-muted-foreground">Maps</a></li>
 		<li><a href="/agents" class="hover:text-foreground text-muted-foreground">Agents</a></li>
+		<li><a href="/matrix" class="hover:text-foreground text-muted-foreground">Matrix</a></li>
 	</ul>
 </nav>
 
