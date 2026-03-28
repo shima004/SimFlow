@@ -16,12 +16,14 @@
 		node,
 		label,
 		namespace,
-		workflowName
+		workflowName,
+		logUrl
 	}: {
 		node: NodeStatus | undefined;
 		label: string;
 		namespace: string;
 		workflowName: string;
+		logUrl?: string;
 	} = $props();
 
 	const phaseVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
@@ -73,7 +75,9 @@
 	}
 
 	function openLogs() {
-		if (!node?.id || !node.templateRef?.template) return;
+		if (!node?.id) return;
+		// derivePodName requires templateRef.template; only available for Running nodes
+		if (node.phase === 'Running' && !node.templateRef?.template) return;
 		logText = '';
 		logHtml = '';
 		lineBuffer = [];
@@ -81,8 +85,16 @@
 		logError = '';
 		sheetOpen = true;
 
-		const podName = derivePodName(node);
-		const params = new URLSearchParams({ namespace, workflow: workflowName, podName });
+		// For Running nodes, derive the actual pod name; otherwise node.id is sufficient
+		const podName = node.phase === 'Running' ? derivePodName(node) : node.id;
+		const params = new URLSearchParams({
+			namespace,
+			workflow: workflowName,
+			podName,
+			nodeId: node.id,
+			phase: node.phase ?? '',
+			...(logUrl ? { logUrl } : {})
+		});
 		eventSource = new EventSource(`/api/log?${params}`);
 
 		// Batch DOM updates — only re-render every FLUSH_INTERVAL_MS
@@ -121,7 +133,6 @@
 
 	// --- Resizable panel ---
 	const MIN_WIDTH = 320;
-	const MAX_WIDTH = window?.innerWidth ? window.innerWidth * 0.95 : 1200;
 	let panelWidth = $state(672); // default ~sm:max-w-2xl
 
 	function onResizeStart(e: MouseEvent) {
@@ -131,7 +142,9 @@
 
 		function onMove(e: MouseEvent) {
 			const delta = startX - e.clientX;
-			panelWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+			// Clamp between MIN_WIDTH and 95% of viewport (evaluated at drag time, not module load)
+			const max = window.innerWidth * 0.95;
+			panelWidth = Math.min(max, Math.max(MIN_WIDTH, startWidth + delta));
 		}
 		function onUp() {
 			window.removeEventListener('mousemove', onMove);

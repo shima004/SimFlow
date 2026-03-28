@@ -71,7 +71,8 @@
 		<h2 class="mb-3 text-lg font-semibold">Precompute</h2>
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 			{#each precomputeNodes as { key, label }}
-				<NodeStatusCard node={findNode(key)} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} />
+				{@const node = findNode(key)}
+				<NodeStatusCard {node} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} logUrl={node ? data.logUrlByNodeId[node.id] : undefined} />
 			{/each}
 		</div>
 	</section>
@@ -80,7 +81,8 @@
 		<h2 class="mb-3 text-lg font-semibold">Simulation</h2>
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 			{#each simulationNodes as { key, label }}
-				<NodeStatusCard node={findNode(key)} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} />
+				{@const node = findNode(key)}
+				<NodeStatusCard {node} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} logUrl={node ? data.logUrlByNodeId[node.id] : undefined} />
 			{/each}
 		</div>
 	</section>

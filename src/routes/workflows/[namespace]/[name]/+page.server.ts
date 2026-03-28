@@ -1,5 +1,6 @@
 // Server-side load for workflow detail page.
-// Fetches the workflow with node status filtered to only the fields we display.
+// Fetches the workflow with node status, and builds per-node log URLs
+// from the artifact-files endpoint using each node's main-logs artifact.
 import { env } from '$env/dynamic/private';
 import { createArgoClient } from '$lib/api/argo';
 import { error } from '@sveltejs/kit';
@@ -18,9 +19,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		params: {
 			path: { namespace: params.namespace, name: params.name },
 			query: {
-				// Fetch only the fields needed for the detail view
 				fields:
-					'metadata.name,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes,templateRef.template'
+					'metadata.name,metadata.uid,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
 			}
 		}
 	});
@@ -29,8 +29,29 @@ export const load: PageServerLoad = async ({ params }) => {
 		error(502, `Failed to fetch workflow: ${JSON.stringify(apiError)}`);
 	}
 
+	// Build a map of nodeId → log artifact URL.
+	// Only nodes with a main-logs artifact get an entry.
+	// URL format: {base}/artifact-files/{ns}/archived-workflows/{wf}/{nodeId}/outputs/main-logs
+	const base = baseUrl.replace(/\/$/, '');
+	const ns = params.namespace;
+	// Artifact URLs use the workflow UID, not the name
+	const wf = data!.metadata!.uid!;
+
+	const logUrlByNodeId: Record<string, string> = {};
+	const nodes = data?.status?.nodes;
+	if (nodes) {
+		for (const node of Object.values(nodes)) {
+			const hasMainLogs = node.outputs?.artifacts?.some((a) => a.name === 'main-logs');
+			if (hasMainLogs) {
+				logUrlByNodeId[node.id] =
+					`${base}/artifact-files/${ns}/archived-workflows/${wf}/${node.id}/outputs/main-logs`;
+			}
+		}
+	}
+
 	return {
 		workflow: data!,
-		namespace: params.namespace
+		namespace: ns,
+		logUrlByNodeId
 	};
 };
