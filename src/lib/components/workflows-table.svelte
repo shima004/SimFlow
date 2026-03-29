@@ -64,6 +64,21 @@
 		})
 	];
 
+	// --- Filter state ---
+	let filterAgent = $state('');
+	let filterMap = $state('');
+
+	let filteredWorkflows = $derived(
+		workflows.filter((w) => {
+			const agent = w.metadata?.labels?.['agent'] ?? '';
+			const map = w.metadata?.labels?.['map'] ?? '';
+			return (
+				agent.toLowerCase().includes(filterAgent.toLowerCase()) &&
+				map.toLowerCase().includes(filterMap.toLowerCase())
+			);
+		})
+	);
+
 	// --- Sorting state ---
 	let sorting = $state<SortingState>([]);
 
@@ -82,21 +97,6 @@
 			renderFallbackValue: null,
 			getCoreRowModel: getCoreRowModel(),
 			getSortedRowModel: getSortedRowModel()
-		})
-	);
-
-	// --- Filter state ---
-	let filterAgent = $state('');
-	let filterMap = $state('');
-
-	let filteredWorkflows = $derived(
-		workflows.filter((w) => {
-			const agent = w.metadata?.labels?.['agent'] ?? '';
-			const map = w.metadata?.labels?.['map'] ?? '';
-			return (
-				agent.toLowerCase().includes(filterAgent.toLowerCase()) &&
-				map.toLowerCase().includes(filterMap.toLowerCase())
-			);
 		})
 	);
 

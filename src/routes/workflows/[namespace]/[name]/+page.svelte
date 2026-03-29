@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
 	import NodeStatusCard from '$lib/components/node-status-card.svelte';
 	import type { PageData } from './$types';
 	import type { components } from '$lib/api/schema.d.ts';
@@ -62,6 +61,18 @@
 			</Badge>
 		</div>
 		<p class="text-muted-foreground mt-1 text-sm">Namespace: {data.namespace}</p>
+		<div class="text-muted-foreground mt-1 flex flex-wrap gap-4 text-sm">
+			{#if wf.metadata?.labels?.['agent']}
+				<span>Agent: <span class="text-foreground font-medium">{wf.metadata.labels['agent']}</span></span>
+			{/if}
+			{#if wf.metadata?.labels?.['map']}
+				<span>Map: <span class="text-foreground font-medium">{wf.metadata.labels['map']}</span></span>
+			{/if}
+			{#if wf.metadata?.labels?.['score']}
+				{@const scoreNum = Number(wf.metadata.labels['score'])}
+				<span>Score: <span class="text-foreground font-medium">{isNaN(scoreNum) ? wf.metadata.labels['score'] : scoreNum.toFixed(3)}</span></span>
+			{/if}
+		</div>
 		<div class="text-muted-foreground mt-1 flex gap-4 text-sm">
 			<span>Started: {formatDate(wf.status?.startedAt)}</span>
 			<span>Finished: {formatDate(wf.status?.finishedAt)}</span>
@@ -103,38 +114,4 @@
 		</div>
 	</section>
 
-	{#if data.artifacts.length > 0}
-		<section>
-			<h2 class="mb-3 text-lg font-semibold">Artifacts</h2>
-			<div class="rounded-md border">
-				<table class="w-full text-sm">
-					<thead>
-						<tr class="bg-muted border-b">
-							<th class="px-3 py-2 text-left font-medium">Node</th>
-							<th class="px-3 py-2 text-left font-medium">Artifact</th>
-							<th class="w-28 px-3 py-2"></th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each data.artifacts as artifact}
-							<tr class="border-b last:border-0">
-								<td class="text-muted-foreground px-3 py-2 font-mono text-xs">{artifact.nodeDisplayName}</td>
-								<td class="px-3 py-2 font-mono text-xs">{artifact.name}</td>
-								<td class="px-3 py-2">
-									<Button
-										size="sm"
-										variant="outline"
-										class="h-7 text-xs"
-										onclick={() => window.open(`/api/artifact?bucket=${encodeURIComponent(artifact.s3Bucket)}&key=${encodeURIComponent(artifact.s3Key)}&filename=${encodeURIComponent(artifact.filename)}`, '_blank')}
-									>
-										Download
-									</Button>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
-		</section>
-	{/if}
 </main>
