@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import NodeStatusCard from '$lib/components/node-status-card.svelte';
 	import SimscopeViewer from '$lib/components/simscope-viewer.svelte';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 	import type { components } from '$lib/api/schema.d.ts';
 
@@ -52,6 +54,7 @@
 		<a href="/" class="text-muted-foreground hover:text-foreground mb-2 inline-block text-sm">
 			← Back
 		</a>
+		<div class="flex items-center justify-between gap-3">
 		<div class="flex items-center gap-3">
 			<h1 class="font-mono text-2xl font-semibold">{wf.metadata?.name}</h1>
 			<Badge
@@ -60,6 +63,8 @@
 			>
 				{wf.status?.phase ?? 'Unknown'}
 			</Badge>
+		</div>
+			<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Refresh</Button>
 		</div>
 		<p class="text-muted-foreground mt-1 text-sm">Namespace: {data.namespace}</p>
 		<div class="text-muted-foreground mt-1 flex flex-wrap gap-4 text-sm">

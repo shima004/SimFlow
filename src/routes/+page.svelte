@@ -2,6 +2,7 @@
 	import WorkflowsTable from '$lib/components/workflows-table.svelte';
 	import RunWorkflowDialog from '$lib/components/run-workflow-dialog.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -16,7 +17,10 @@
 			<h1 class="text-2xl font-semibold">Workflows</h1>
 			<p class="text-muted-foreground text-sm">Namespace: {data.namespace}</p>
 		</div>
-		<Button onclick={() => (dialogOpen = true)}>Run Workflow</Button>
+		<div class="flex gap-2">
+			<Button variant="outline" onclick={() => invalidateAll()}>Refresh</Button>
+			<Button onclick={() => (dialogOpen = true)}>Run Workflow</Button>
+		</div>
 	</div>
 
 	{#if submittedNames.length > 0}
