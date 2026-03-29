@@ -22,7 +22,7 @@ export const load: PageServerLoad = async () => {
 			params: {
 				path: { namespace },
 				query: {
-					fields: 'items.metadata.name,items.metadata.labels,items.status.phase,items.status.startedAt,items.status.finishedAt'
+					fields: 'items.metadata.name,items.metadata.uid,items.metadata.labels,items.status.phase,items.status.startedAt,items.status.finishedAt'
 				}
 			}
 		}),
