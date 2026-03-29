@@ -41,3 +41,32 @@ export function assertBucketAllowed(bucket: string): void {
 		throw new Error(`Bucket "${bucket}" is not in the allowed list`);
 	}
 }
+
+// Strips the file extension from a key (e.g. "agent1.py" → "agent1")
+export function stripExt(key: string): string {
+	const slash = key.lastIndexOf('/');
+	const base = key.slice(slash + 1);
+	const dot = base.lastIndexOf('.');
+	if (dot <= 0) return key; // no extension or hidden file
+	return key.slice(0, slash + 1 + dot);
+}
+
+// Lists all object keys in a bucket, stripped of extensions.
+export async function listBucketKeys(bucket: string): Promise<string[]> {
+	const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+	const client = getS3Client();
+	const keys: string[] = [];
+	let continuationToken: string | undefined;
+
+	do {
+		const res = await client.send(
+			new ListObjectsV2Command({ Bucket: bucket, MaxKeys: 1000, ContinuationToken: continuationToken })
+		);
+		for (const obj of res.Contents ?? []) {
+			if (obj.Key) keys.push(stripExt(obj.Key));
+		}
+		continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+	} while (continuationToken);
+
+	return keys;
+}

@@ -4,6 +4,7 @@
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { createArgoClient } from '$lib/api/argo';
+import { listBucketKeys } from '$lib/s3';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -16,15 +17,18 @@ export const load: PageServerLoad = async () => {
 
 	const client = createArgoClient(baseUrl, env.ARGO_TOKEN);
 
-	const { data, error: apiError } = await client.GET('/api/v1/workflows/{namespace}', {
-		params: {
-			path: { namespace },
-			query: {
-				// Restrict response to only the fields used in the table
-				fields: 'items.metadata.name,items.metadata.labels,items.status.phase,items.status.startedAt,items.status.finishedAt'
+	const [{ data, error: apiError }, agentKeys, mapKeys] = await Promise.all([
+		client.GET('/api/v1/workflows/{namespace}', {
+			params: {
+				path: { namespace },
+				query: {
+					fields: 'items.metadata.name,items.metadata.labels,items.status.phase,items.status.startedAt,items.status.finishedAt'
+				}
 			}
-		}
-	});
+		}),
+		listBucketKeys('agents').catch(() => [] as string[]),
+		listBucketKeys('maps').catch(() => [] as string[])
+	]);
 
 	if (apiError) {
 		error(502, `Failed to fetch workflows: ${JSON.stringify(apiError)}`);
@@ -32,6 +36,8 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		workflows: data?.items ?? [],
-		namespace
+		namespace,
+		agentKeys,
+		mapKeys
 	};
 };
