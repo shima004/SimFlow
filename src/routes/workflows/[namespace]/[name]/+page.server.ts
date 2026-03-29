@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			path: { namespace: params.namespace, name: params.name },
 			query: {
 				fields:
-					'metadata.name,metadata.labels,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
+					'metadata.name,metadata.uid,metadata.labels,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
 			}
 		}
 	});
@@ -38,6 +38,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	const isArchived =
 		data?.metadata?.labels?.['workflows.argoproj.io/workflow-archiving-status'] === 'Persisted';
 	const workflowsPath = isArchived ? 'archived-workflows' : 'workflows';
+	// Archived workflows use UID in the artifact-files URL, active workflows use name
+	const workflowKey = isArchived ? (data?.metadata?.uid ?? params.name) : params.name;
 
 	const logUrlByNodeId: Record<string, string> = {};
 	type ArtifactEntry = {
@@ -58,7 +60,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		for (const node of Object.values(nodes)) {
 			for (const artifact of node.outputs?.artifacts ?? []) {
 				if (!artifact.name || !artifact.s3) continue;
-				const argoUrl = `${base}/artifact-files/${ns}/${workflowsPath}/${params.name}/${node.id}/outputs/${artifact.name}`;
+				const argoUrl = `${base}/artifact-files/${ns}/${workflowsPath}/${workflowKey}/${node.id}/outputs/${artifact.name}`;
 				const s3Key = artifact.s3.key ?? '';
 				// Bucket may be specified per-artifact or fall back to env default
 				const s3Bucket = artifact.s3.bucket ?? env.S3_ALLOWED_BUCKETS?.split(',')[0]?.trim() ?? '';
