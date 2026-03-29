@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import NodeStatusCard from '$lib/components/node-status-card.svelte';
 	import type { PageData } from './$types';
 	import type { components } from '$lib/api/schema.d.ts';
@@ -72,18 +73,65 @@
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 			{#each precomputeNodes as { key, label }}
 				{@const node = findNode(key)}
-				<NodeStatusCard {node} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} logUrl={node ? data.logUrlByNodeId[node.id] : undefined} />
+				<NodeStatusCard
+					{node} {label}
+					namespace={data.namespace}
+					workflowName={wf.metadata?.name ?? ''}
+					logUrl={node ? data.logUrlByNodeId[node.id] : undefined}
+					artifacts={node ? data.artifacts.filter((a) => a.nodeId === node.id) : []}
+				/>
 			{/each}
 		</div>
 	</section>
 
-	<section>
+	<section class="mb-8">
 		<h2 class="mb-3 text-lg font-semibold">Simulation</h2>
 		<div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 			{#each simulationNodes as { key, label }}
 				{@const node = findNode(key)}
-				<NodeStatusCard {node} {label} namespace={data.namespace} workflowName={wf.metadata?.name ?? ''} logUrl={node ? data.logUrlByNodeId[node.id] : undefined} />
+				<NodeStatusCard
+					{node} {label}
+					namespace={data.namespace}
+					workflowName={wf.metadata?.name ?? ''}
+					logUrl={node ? data.logUrlByNodeId[node.id] : undefined}
+					artifacts={node ? data.artifacts.filter((a) => a.nodeId === node.id) : []}
+				/>
 			{/each}
 		</div>
 	</section>
+
+	{#if data.artifacts.length > 0}
+		<section>
+			<h2 class="mb-3 text-lg font-semibold">Artifacts</h2>
+			<div class="rounded-md border">
+				<table class="w-full text-sm">
+					<thead>
+						<tr class="bg-muted border-b">
+							<th class="px-3 py-2 text-left font-medium">Node</th>
+							<th class="px-3 py-2 text-left font-medium">Artifact</th>
+							<th class="w-28 px-3 py-2"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.artifacts as artifact}
+							<tr class="border-b last:border-0">
+								<td class="text-muted-foreground px-3 py-2 font-mono text-xs">{artifact.nodeDisplayName}</td>
+								<td class="px-3 py-2 font-mono text-xs">{artifact.name}</td>
+								<td class="px-3 py-2">
+									<Button
+										size="sm"
+										variant="outline"
+										class="h-7 text-xs"
+										onclick={() => window.open(`/api/artifact?bucket=${encodeURIComponent(artifact.s3Bucket)}&key=${encodeURIComponent(artifact.s3Key)}&filename=${encodeURIComponent(artifact.filename)}`, '_blank')}
+									>
+										Download
+									</Button>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</section>
+	{/if}
 </main>

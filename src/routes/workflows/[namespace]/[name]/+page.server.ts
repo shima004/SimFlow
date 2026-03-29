@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ params }) => {
 			path: { namespace: params.namespace, name: params.name },
 			query: {
 				fields:
-					'metadata.name,metadata.uid,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
+					'metadata.name,metadata.labels,status.phase,status.startedAt,status.finishedAt,status.message,status.nodes'
 			}
 		}
 	});
@@ -34,17 +34,47 @@ export const load: PageServerLoad = async ({ params }) => {
 	// URL format: {base}/artifact-files/{ns}/archived-workflows/{wf}/{nodeId}/outputs/main-logs
 	const base = baseUrl.replace(/\/$/, '');
 	const ns = params.namespace;
-	// Artifact URLs use the workflow UID, not the name
-	const wf = data!.metadata!.uid!;
+	// Use archived-workflows path when the workflow has been persisted to the archive
+	const isArchived =
+		data?.metadata?.labels?.['workflows.argoproj.io/workflow-archiving-status'] === 'Persisted';
+	const workflowsPath = isArchived ? 'archived-workflows' : 'workflows';
 
 	const logUrlByNodeId: Record<string, string> = {};
+	type ArtifactEntry = {
+		nodeId: string;
+		nodeDisplayName: string;
+		name: string;
+		// Argo artifact-files URL — used only for log streaming (main-logs)
+		argoUrl: string;
+		// S3 key and bucket for direct presigned URL download
+		s3Key: string;
+		s3Bucket: string;
+		filename: string;
+	};
+	const artifacts: ArtifactEntry[] = [];
+
 	const nodes = data?.status?.nodes;
 	if (nodes) {
 		for (const node of Object.values(nodes)) {
-			const hasMainLogs = node.outputs?.artifacts?.some((a) => a.name === 'main-logs');
-			if (hasMainLogs) {
-				logUrlByNodeId[node.id] =
-					`${base}/artifact-files/${ns}/archived-workflows/${wf}/${node.id}/outputs/main-logs`;
+			for (const artifact of node.outputs?.artifacts ?? []) {
+				if (!artifact.name || !artifact.s3) continue;
+				const argoUrl = `${base}/artifact-files/${ns}/${workflowsPath}/${params.name}/${node.id}/outputs/${artifact.name}`;
+				const s3Key = artifact.s3.key ?? '';
+				// Bucket may be specified per-artifact or fall back to env default
+				const s3Bucket = artifact.s3.bucket ?? env.S3_ALLOWED_BUCKETS?.split(',')[0]?.trim() ?? '';
+				const filename = s3Key.split('/').pop() ?? artifact.name;
+				if (artifact.name === 'main-logs') {
+					logUrlByNodeId[node.id] = argoUrl;
+				}
+				artifacts.push({
+					nodeId: node.id,
+					nodeDisplayName: node.displayName ?? node.id,
+					name: artifact.name,
+					argoUrl,
+					s3Key,
+					s3Bucket,
+					filename
+				});
 			}
 		}
 	}
@@ -52,6 +82,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		workflow: data!,
 		namespace: ns,
-		logUrlByNodeId
+		logUrlByNodeId,
+		artifacts
 	};
 };

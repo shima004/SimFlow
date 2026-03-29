@@ -12,19 +12,34 @@
 
 	type NodeStatus = components['schemas']['io.argoproj.workflow.v1alpha1.NodeStatus'];
 
+	type ArtifactEntry = {
+		nodeId: string;
+		nodeDisplayName: string;
+		name: string;
+		argoUrl: string;
+		s3Key: string;
+		s3Bucket: string;
+		filename: string;
+	};
+
 	let {
 		node,
 		label,
 		namespace,
 		workflowName,
-		logUrl
+		logUrl,
+		artifacts = []
 	}: {
 		node: NodeStatus | undefined;
 		label: string;
 		namespace: string;
 		workflowName: string;
 		logUrl?: string;
+		artifacts?: ArtifactEntry[];
 	} = $props();
+
+	// Artifacts available for download on this node (excludes main-logs which is in the log viewer)
+	let downloadableArtifacts = $derived(artifacts.filter((a) => a.name !== 'main-logs'));
 
 	const phaseVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
 		Succeeded: 'default',
@@ -175,8 +190,17 @@
 			{#if node.message}
 				<div class="text-destructive mt-1 break-words">{node.message}</div>
 			{/if}
-			<div class="pt-2">
+			<div class="flex flex-wrap gap-1 pt-2">
 				<Button size="sm" variant="outline" onclick={openLogs}>View Logs</Button>
+				{#each downloadableArtifacts as artifact}
+					<Button
+						size="sm"
+						variant="outline"
+						onclick={() => window.open(`/api/artifact?bucket=${encodeURIComponent(artifact.s3Bucket)}&key=${encodeURIComponent(artifact.s3Key)}&filename=${encodeURIComponent(artifact.filename)}`, '_blank')}
+					>
+						↓ {artifact.name}
+					</Button>
+				{/each}
 			</div>
 		{:else}
 			<div>No data</div>
