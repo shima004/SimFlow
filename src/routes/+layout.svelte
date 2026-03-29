@@ -5,7 +5,10 @@
 	let { children } = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+	<title>SimFlow</title>
+	<link rel="icon" href={favicon} />
+</svelte:head>
 
 <nav class="border-b px-6 py-3">
 	<ul class="flex gap-6 text-sm font-medium">
