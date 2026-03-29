@@ -2,9 +2,11 @@
 	// Agent × Map score matrix.
 	// Rows = agents (S3 keys), columns = maps (S3 keys).
 	// Each cell shows the best score from matching Argo Workflow labels.
+	// Empty cells have a Run button that opens a confirmation dialog.
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -21,7 +23,6 @@
 	let selectedAgents = $state(new Set(data.agentKeys));
 	let selectedMaps = $state(new Set(data.mapKeys));
 
-	// Search queries for filtering the selector lists
 	let agentSearch = $state('');
 	let mapSearch = $state('');
 
@@ -47,7 +48,6 @@
 		selectedMaps = next;
 	}
 
-	// Select/deselect only the currently filtered items
 	function selectFilteredAgents() {
 		const next = new Set(selectedAgents);
 		filteredAgentKeys.forEach((k) => next.add(k));
@@ -76,6 +76,64 @@
 	function formatScore(score: string): string {
 		const n = Number(score);
 		return isNaN(n) ? score : n.toFixed(3);
+	}
+
+	// --- Run dialog state ---
+	const LANGUAGES = [
+		{ label: 'Python', template: 'rrs-workflow-python' },
+		{ label: 'Java', template: 'rrs-workflow-java' }
+	] as const;
+	const CPU_OPTIONS = ['2000m', '3000m', '4000m'] as const;
+	const MEMORY_OPTIONS = ['8Gi', '12Gi', '16Gi'] as const;
+
+	let runDialogOpen = $state(false);
+	let runAgent = $state('');
+	let runMap = $state('');
+	let runLanguage = $state<(typeof LANGUAGES)[number]>(LANGUAGES[0]);
+	let runTag = $state('default');
+	let runServerCpu = $state('3000m');
+	let runServerMemory = $state('12Gi');
+	let runAgentCpu = $state('3000m');
+	let runAgentMemory = $state('12Gi');
+	let runSubmitting = $state(false);
+	let runError = $state('');
+	let runSubmittedName = $state('');
+
+	function openRunDialog(agent: string, map: string) {
+		runAgent = agent;
+		runMap = map;
+		runError = '';
+		runSubmittedName = '';
+		runDialogOpen = true;
+	}
+
+	async function submitRun() {
+		runSubmitting = true;
+		runError = '';
+		try {
+			const res = await fetch('/api/workflow/submit', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					template: runLanguage.template,
+					agent: runAgent,
+					map: runMap,
+					tag: runTag || 'default',
+					serverCpu: runServerCpu,
+					serverMemory: runServerMemory,
+					agentCpu: runAgentCpu,
+					agentMemory: runAgentMemory
+				})
+			});
+			if (!res.ok) throw new Error(await res.text());
+			const { name } = await res.json();
+			runSubmittedName = name;
+			runDialogOpen = false;
+		} catch (e) {
+			runError = e instanceof Error ? e.message : String(e);
+		} finally {
+			runSubmitting = false;
+		}
 	}
 </script>
 
@@ -106,36 +164,14 @@
 				<Input placeholder="Filter agents..." bind:value={agentSearch} class="mb-2 h-7 text-xs" />
 				<div class="border-border max-h-48 overflow-y-auto rounded-md border">
 					{#each filteredAgentKeys as agent}
-						<label
-							class="hover:bg-muted flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
-							class:bg-muted={selectedAgents.has(agent)}
-						>
-							<input
-								type="checkbox"
-								checked={selectedAgents.has(agent)}
-								onchange={() => toggleAgent(agent)}
-								class="shrink-0"
-							/>
+						<label class="hover:bg-muted flex cursor-pointer items-center gap-2 px-2 py-1 text-xs" class:bg-muted={selectedAgents.has(agent)}>
+							<input type="checkbox" checked={selectedAgents.has(agent)} onchange={() => toggleAgent(agent)} class="shrink-0" />
 							<span class="font-mono truncate" title={agent}>{agent}</span>
 						</label>
 					{:else}
 						<p class="text-muted-foreground px-2 py-2 text-xs">No matches</p>
 					{/each}
 				</div>
-				<!-- Selected chips -->
-				{#if selectedAgents.size > 0}
-					<div class="mt-2 flex flex-wrap gap-1">
-						{#each visibleAgents as agent}
-							<button
-								class="bg-secondary text-secondary-foreground hover:bg-secondary/70 flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-xs"
-								onclick={() => toggleAgent(agent)}
-								title="Remove {agent}"
-							>
-								{agent} <span class="opacity-60">×</span>
-							</button>
-						{/each}
-					</div>
-				{/if}
 			</div>
 
 			<!-- Map selector -->
@@ -149,36 +185,14 @@
 				<Input placeholder="Filter maps..." bind:value={mapSearch} class="mb-2 h-7 text-xs" />
 				<div class="border-border max-h-48 overflow-y-auto rounded-md border">
 					{#each filteredMapKeys as map}
-						<label
-							class="hover:bg-muted flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
-							class:bg-muted={selectedMaps.has(map)}
-						>
-							<input
-								type="checkbox"
-								checked={selectedMaps.has(map)}
-								onchange={() => toggleMap(map)}
-								class="shrink-0"
-							/>
+						<label class="hover:bg-muted flex cursor-pointer items-center gap-2 px-2 py-1 text-xs" class:bg-muted={selectedMaps.has(map)}>
+							<input type="checkbox" checked={selectedMaps.has(map)} onchange={() => toggleMap(map)} class="shrink-0" />
 							<span class="font-mono truncate" title={map}>{map}</span>
 						</label>
 					{:else}
 						<p class="text-muted-foreground px-2 py-2 text-xs">No matches</p>
 					{/each}
 				</div>
-				<!-- Selected chips -->
-				{#if selectedMaps.size > 0}
-					<div class="mt-2 flex flex-wrap gap-1">
-						{#each visibleMaps as map}
-							<button
-								class="bg-secondary text-secondary-foreground hover:bg-secondary/70 flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-xs"
-								onclick={() => toggleMap(map)}
-								title="Remove {map}"
-							>
-								{map} <span class="opacity-60">×</span>
-							</button>
-						{/each}
-					</div>
-				{/if}
 			</div>
 		</div>
 
@@ -204,17 +218,36 @@
 									{@const run = cellRun(agent, map)}
 									<td class="border px-3 py-2 text-center align-middle">
 										{#if !run}
-											<span class="text-muted-foreground">—</span>
-										{:else}
-											<a
-												href="/workflows/{data.namespace}/{run.workflowName}"
-												class="inline-flex items-center gap-1 hover:underline"
-												title={run.workflowName}
+											<Button
+												size="sm"
+												variant="ghost"
+												class="h-6 px-2 text-xs opacity-40 hover:opacity-100"
+												onclick={() => openRunDialog(agent, map)}
 											>
-												<Badge variant={phaseVariant[run.phase] ?? 'outline'} class="text-xs">
-													{run.score !== '' ? formatScore(run.score) : run.phase}
-												</Badge>
-											</a>
+												▶ Run
+											</Button>
+										{:else}
+											<div class="flex flex-col items-center gap-1">
+												<a
+													href="/workflows/{data.namespace}/{run.workflowName}"
+													class="inline-flex items-center gap-1 hover:underline"
+													title={run.workflowName}
+												>
+													<Badge variant={phaseVariant[run.phase] ?? 'outline'} class="text-xs">
+														{run.score !== '' ? formatScore(run.score) : run.phase}
+													</Badge>
+												</a>
+												{#if run.phase === 'Failed' || run.phase === 'Error'}
+													<Button
+														size="sm"
+														variant="ghost"
+														class="h-5 px-2 text-xs opacity-40 hover:opacity-100"
+														onclick={() => openRunDialog(agent, map)}
+													>
+														▶ Retry
+													</Button>
+												{/if}
+											</div>
 										{/if}
 									</td>
 								{/each}
@@ -226,3 +259,92 @@
 		{/if}
 	{/if}
 </main>
+
+<!-- Run confirmation dialog -->
+<Dialog.Root bind:open={runDialogOpen}>
+	<Dialog.Content class="max-w-sm">
+		<Dialog.Header>
+			<Dialog.Title>Run Workflow</Dialog.Title>
+			<Dialog.Description>
+				<span class="font-mono">{runAgent}</span> × <span class="font-mono">{runMap}</span>
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<div class="space-y-4 py-2">
+			<!-- Language -->
+			<div class="space-y-1">
+				<p class="text-sm font-medium">Language</p>
+				<div class="flex gap-2">
+					{#each LANGUAGES as lang}
+						<button
+							class="rounded-md border px-4 py-1.5 text-sm transition-colors"
+							class:bg-primary={runLanguage.template === lang.template}
+							class:text-primary-foreground={runLanguage.template === lang.template}
+							class:border-primary={runLanguage.template === lang.template}
+							class:border-border={runLanguage.template !== lang.template}
+							onclick={() => (runLanguage = lang)}
+						>
+							{lang.label}
+						</button>
+					{/each}
+				</div>
+			</div>
+
+			<!-- Tag -->
+			<div class="space-y-1">
+				<label class="text-sm font-medium" for="matrix-run-tag">Tag</label>
+				<Input id="matrix-run-tag" bind:value={runTag} placeholder="default" />
+			</div>
+
+			<!-- Resources -->
+			<div class="space-y-2">
+				<p class="text-sm font-medium">Resources</p>
+				<div class="grid grid-cols-2 gap-x-4 gap-y-2">
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="matrix-server-cpu">Server CPU</label>
+						<select id="matrix-server-cpu" bind:value={runServerCpu} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each CPU_OPTIONS as v}
+								<option value={v}>{v.replace('000m', ' cores')}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="matrix-server-memory">Server Memory</label>
+						<select id="matrix-server-memory" bind:value={runServerMemory} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each MEMORY_OPTIONS as v}
+								<option value={v}>{v}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="matrix-agent-cpu">Agent CPU</label>
+						<select id="matrix-agent-cpu" bind:value={runAgentCpu} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each CPU_OPTIONS as v}
+								<option value={v}>{v.replace('000m', ' cores')}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="matrix-agent-memory">Agent Memory</label>
+						<select id="matrix-agent-memory" bind:value={runAgentMemory} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each MEMORY_OPTIONS as v}
+								<option value={v}>{v}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
+			</div>
+
+			{#if runError}
+				<p class="text-destructive text-sm">{runError}</p>
+			{/if}
+		</div>
+
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => (runDialogOpen = false)} disabled={runSubmitting}>Cancel</Button>
+			<Button onclick={submitRun} disabled={runSubmitting}>
+				{runSubmitting ? 'Submitting...' : 'Run'}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
