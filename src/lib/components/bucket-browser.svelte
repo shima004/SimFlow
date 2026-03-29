@@ -22,7 +22,9 @@
 	let prefixFilter = $state('');
 	let nextContinuationToken = $state<string | null>(null);
 	let isTruncated = $state(false);
-	let uploading = $state(false);
+	// Per-file upload progress: key = filename, value = 'uploading' | 'done' | error message
+	let uploadProgress = $state<Map<string, string>>(new Map());
+	let uploading = $derived(uploadProgress.size > 0 && [...uploadProgress.values()].some((v) => v === 'uploading'));
 	let deletingKeys = $state<Set<string>>(new Set());
 
 	// Fetch object list from the API
@@ -84,33 +86,44 @@
 		window.open(url, '_blank');
 	}
 
-	// Upload: get presigned PUT URL, then PUT the file directly to S3
-	async function upload(e: Event) {
-		const input = e.target as HTMLInputElement;
-		const file = input.files?.[0];
-		if (!file) return;
-		uploading = true;
-		error = '';
-
+	// Upload a single file and track its progress in uploadProgress
+	async function uploadFile(file: File) {
 		const key = prefixFilter ? `${prefixFilter.replace(/\/$/, '')}/${file.name}` : file.name;
-		const params = new URLSearchParams({ bucket, key, operation: 'put' });
+		const next = new Map(uploadProgress);
+		next.set(file.name, 'uploading');
+		uploadProgress = next;
 
 		try {
-			const presignRes = await fetch(`/api/s3/presign?${params}`);
+			const presignRes = await fetch(`/api/s3/presign?${new URLSearchParams({ bucket, key, operation: 'put' })}`);
 			if (!presignRes.ok) throw new Error(await presignRes.text());
 			const { url } = await presignRes.json();
 
 			const uploadRes = await fetch(url, { method: 'PUT', body: file });
 			if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`);
 
-			// Reload to reflect the new file
-			await loadObjects();
+			const done = new Map(uploadProgress);
+			done.set(file.name, 'done');
+			uploadProgress = done;
 		} catch (e) {
-			error = e instanceof Error ? e.message : String(e);
-		} finally {
-			uploading = false;
-			input.value = '';
+			const failed = new Map(uploadProgress);
+			failed.set(file.name, e instanceof Error ? e.message : String(e));
+			uploadProgress = failed;
 		}
+	}
+
+	// Upload multiple files in parallel, then reload the list
+	async function upload(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const files = Array.from(input.files ?? []);
+		if (files.length === 0) return;
+		error = '';
+		uploadProgress = new Map();
+
+		await Promise.all(files.map(uploadFile));
+		await loadObjects();
+
+		uploadProgress = new Map();
+		input.value = '';
 	}
 
 	// Delete a single object
@@ -181,15 +194,35 @@
 			Reset
 		</Button>
 
-		<!-- Upload: label styled as button wraps hidden file input -->
+		<!-- Upload: multiple files supported -->
 		<label class={buttonVariants({ size: 'sm' })} class:opacity-50={uploading} class:pointer-events-none={uploading}>
 			{uploading ? 'Uploading...' : 'Upload'}
-			<input type="file" class="hidden" onchange={upload} disabled={uploading} />
+			<input type="file" multiple class="hidden" onchange={upload} disabled={uploading} />
 		</label>
 	</div>
 
 	{#if error}
 		<p class="text-destructive text-sm">{error}</p>
+	{/if}
+
+	{#if uploadProgress.size > 0}
+		<div class="space-y-1">
+			{#each [...uploadProgress.entries()] as [filename, status]}
+				<div class="flex items-center gap-2 text-xs">
+					{#if status === 'uploading'}
+						<span class="text-muted-foreground animate-pulse">↑</span>
+					{:else if status === 'done'}
+						<span class="text-green-600">✓</span>
+					{:else}
+						<span class="text-destructive">✗</span>
+					{/if}
+					<span class="font-mono">{filename}</span>
+					{#if status !== 'uploading' && status !== 'done'}
+						<span class="text-destructive">{status}</span>
+					{/if}
+				</div>
+			{/each}
+		</div>
 	{/if}
 
 	<!-- Object table -->
