@@ -63,6 +63,25 @@ spec:
                 secretKeyRef:
                   name: simflow-secret
                   key: S3_ALLOWED_BUCKETS
+            # SimScope viewer
+            - name: SIMSCOPE_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: SIMSCOPE_BASE_URL
+                  optional: true
+            - name: SIMSCOPE_LOG_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: SIMSCOPE_LOG_BUCKET
+                  optional: true
+            - name: SIMSCOPE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: SIMSCOPE_PORT
+                  optional: true
           resources:
             requests:
               cpu: 100m

@@ -81,10 +81,25 @@ export const load: PageServerLoad = async ({ params }) => {
 		}
 	}
 
+	// Build SimScope connection parameters from the workflow
+	const uid = data?.metadata?.uid ?? '';
+	const simscopeHost = uid ? `rrs-server-service-${uid}` : '';
+	const simscopePort = env.SIMSCOPE_PORT ?? '';
+	const s3Endpoint = env.S3_ENDPOINT ?? '';
+	const s3LogBucket = env.SIMSCOPE_LOG_BUCKET ?? '';
+	const simscopeUrl =
+		s3Endpoint && s3LogBucket && uid
+			? `${s3Endpoint.replace(/\/$/, '')}/${s3LogBucket}/${uid}/rescue.log.7z`
+			: '';
+
 	return {
 		workflow: data!,
 		namespace: ns,
 		logUrlByNodeId,
-		artifacts
+		artifacts,
+		simscopeBaseUrl: env.SIMSCOPE_BASE_URL ?? '',
+		simscopeHost,
+		simscopePort,
+		simscopeUrl
 	};
 };

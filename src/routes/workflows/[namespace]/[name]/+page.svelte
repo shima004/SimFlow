@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import NodeStatusCard from '$lib/components/node-status-card.svelte';
+	import SimscopeViewer from '$lib/components/simscope-viewer.svelte';
 	import type { PageData } from './$types';
 	import type { components } from '$lib/api/schema.d.ts';
 
@@ -79,6 +80,18 @@
 		</div>
 		{#if wf.status?.message}
 			<p class="text-destructive mt-2 text-sm">{wf.status.message}</p>
+		{/if}
+		{#if data.simscopeBaseUrl}
+			<div class="mt-3">
+				<SimscopeViewer
+					baseUrl={data.simscopeBaseUrl}
+					url={data.simscopeUrl}
+					host={data.simscopeHost}
+					port={data.simscopePort}
+					map={wf.metadata?.labels?.['map'] ?? ''}
+					agent={wf.metadata?.labels?.['agent'] ?? ''}
+				/>
+			</div>
 		{/if}
 	</div>
 
