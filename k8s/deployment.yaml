@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simflow
+  labels:
+    app: simflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simflow
+  template:
+    metadata:
+      labels:
+        app: simflow
+    spec:
+      containers:
+        - name: simflow
+          image: simflow:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            # Argo Workflows
+            - name: ARGO_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: ARGO_BASE_URL
+            - name: ARGO_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: ARGO_NAMESPACE
+            - name: ARGO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: ARGO_TOKEN
+            # S3
+            - name: S3_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_ENDPOINT
+            - name: S3_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_REGION
+            - name: S3_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_ACCESS_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_SECRET_ACCESS_KEY
+            - name: S3_ALLOWED_BUCKETS
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_ALLOWED_BUCKETS
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 30
