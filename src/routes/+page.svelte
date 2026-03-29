@@ -7,7 +7,7 @@
 	let { data }: { data: PageData } = $props();
 
 	let dialogOpen = $state(false);
-	let submittedName = $state('');
+	let submittedNames = $state<string[]>([]);
 </script>
 
 <main class="mx-auto max-w-5xl p-6">
@@ -19,9 +19,12 @@
 		<Button onclick={() => (dialogOpen = true)}>Run Workflow</Button>
 	</div>
 
-	{#if submittedName}
+	{#if submittedNames.length > 0}
 		<div class="bg-muted mb-4 rounded-md px-4 py-2 text-sm">
-			Submitted: <span class="font-mono">{submittedName}</span>
+			Submitted {submittedNames.length} workflow{submittedNames.length !== 1 ? 's' : ''}:
+			{#each submittedNames as name}
+				<span class="font-mono mr-2">{name}</span>
+			{/each}
 		</div>
 	{/if}
 
@@ -31,7 +34,7 @@
 <RunWorkflowDialog
 	bind:open={dialogOpen}
 	onclose={() => (dialogOpen = false)}
-	onsubmitted={(name) => (submittedName = name)}
+	onsubmitted={(names) => (submittedNames = names)}
 	agentKeys={data.agentKeys}
 	mapKeys={data.mapKeys}
 />
