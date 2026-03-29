@@ -25,6 +25,13 @@
 	let selectedAgents = $state(new Set<string>());
 	let selectedMaps = $state(new Set<string>());
 	let tag = $state('default');
+	const CPU_OPTIONS = ['2000m', '3000m', '4000m'] as const;
+	const MEMORY_OPTIONS = ['8Gi', '12Gi', '16Gi'] as const;
+
+	let serverCpu = $state('3000m');
+	let serverMemory = $state('12Gi');
+	let agentCpu = $state('3000m');
+	let agentMemory = $state('12Gi');
 	let agentSearch = $state('');
 	let mapSearch = $state('');
 	let submitting = $state(false);
@@ -85,7 +92,16 @@
 					const res = await fetch('/api/workflow/submit', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ template: language.template, agent, map, tag: tag || 'default' })
+						body: JSON.stringify({
+						template: language.template,
+						agent,
+						map,
+						tag: tag || 'default',
+						serverCpu,
+						serverMemory,
+						agentCpu,
+						agentMemory
+					})
 					});
 					if (!res.ok) throw new Error(await res.text());
 					const { name } = await res.json();
@@ -188,6 +204,45 @@
 			<div class="space-y-1">
 				<label class="text-sm font-medium" for="run-tag">Tag</label>
 				<Input id="run-tag" bind:value={tag} placeholder="default" />
+			</div>
+
+			<!-- Resource settings -->
+			<div class="space-y-2">
+				<p class="text-sm font-medium">Resources</p>
+				<div class="grid grid-cols-2 gap-x-4 gap-y-2">
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="server-cpu">Server CPU</label>
+						<select id="server-cpu" bind:value={serverCpu} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each CPU_OPTIONS as v}
+								<option value={v}>{v.replace('000m', ' cores')}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="server-memory">Server Memory</label>
+						<select id="server-memory" bind:value={serverMemory} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each MEMORY_OPTIONS as v}
+								<option value={v}>{v}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="agent-cpu">Agent CPU</label>
+						<select id="agent-cpu" bind:value={agentCpu} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each CPU_OPTIONS as v}
+								<option value={v}>{v.replace('000m', ' cores')}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="space-y-1">
+						<label class="text-muted-foreground text-xs" for="agent-memory">Agent Memory</label>
+						<select id="agent-memory" bind:value={agentMemory} class="border-input bg-background h-7 w-full rounded-md border px-2 text-xs">
+							{#each MEMORY_OPTIONS as v}
+								<option value={v}>{v}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
 			</div>
 
 			<!-- Submit results -->

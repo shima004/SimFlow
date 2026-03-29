@@ -17,14 +17,23 @@ export const POST: RequestHandler = async ({ request }) => {
 		error(500, 'ARGO_BASE_URL and ARGO_NAMESPACE are required');
 	}
 
-	let body: { template: Template; agent: string; map: string; tag?: string };
+	let body: {
+		template: Template;
+		agent: string;
+		map: string;
+		tag?: string;
+		serverCpu?: string;
+		serverMemory?: string;
+		agentCpu?: string;
+		agentMemory?: string;
+	};
 	try {
 		body = await request.json();
 	} catch {
 		error(400, 'Invalid JSON body');
 	}
 
-	const { template, agent, map, tag } = body;
+	const { template, agent, map, tag, serverCpu, serverMemory, agentCpu, agentMemory } = body;
 	if (!template || !agent || !map) error(400, 'template, agent, and map are required');
 	if (!(ALLOWED_TEMPLATES as readonly string[]).includes(template)) {
 		error(400, `template must be one of: ${ALLOWED_TEMPLATES.join(', ')}`);
@@ -34,6 +43,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const parameters = [`agent=${agent}`, `map=${map}`];
 	if (tag) parameters.push(`tag=${tag}`);
+	if (serverCpu) parameters.push(`server_cpu=${serverCpu}`);
+	if (serverMemory) parameters.push(`server_memory=${serverMemory}`);
+	if (agentCpu) parameters.push(`agent_cpu=${agentCpu}`);
+	if (agentMemory) parameters.push(`agent_memory=${agentMemory}`);
 
 	const { data, error: apiError } = await client.POST('/api/v1/workflows/{namespace}/submit', {
 		params: { path: { namespace } },
