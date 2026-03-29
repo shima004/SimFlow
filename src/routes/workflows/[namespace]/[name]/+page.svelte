@@ -54,7 +54,10 @@
 		</a>
 		<div class="flex items-center gap-3">
 			<h1 class="font-mono text-2xl font-semibold">{wf.metadata?.name}</h1>
-			<Badge variant={phaseVariant[wf.status?.phase ?? ''] ?? 'outline'}>
+			<Badge
+				variant={phaseVariant[wf.status?.phase ?? ''] ?? 'outline'}
+				class={wf.status?.phase === 'Succeeded' ? 'bg-green-500 text-white border-transparent hover:bg-green-500' : wf.status?.phase === 'Running' ? 'bg-blue-500 text-white border-transparent hover:bg-blue-500' : ''}
+			>
 				{wf.status?.phase ?? 'Unknown'}
 			</Badge>
 		</div>

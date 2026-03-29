@@ -175,8 +175,10 @@
 		<div class="flex items-center justify-between gap-2">
 			<Card.Title class="text-sm font-medium">{label}</Card.Title>
 			{#if node}
-				<Badge variant={phaseVariant[node.phase ?? ''] ?? 'outline'}>
-					{node.phase ?? 'Unknown'}
+				{@const nodePhase = node.phase ?? 'Unknown'}
+				{@const nodePhaseClass = nodePhase === 'Succeeded' ? 'bg-green-500 text-white border-transparent hover:bg-green-500' : nodePhase === 'Running' ? 'bg-blue-500 text-white border-transparent hover:bg-blue-500' : ''}
+				<Badge variant={phaseVariant[nodePhase] ?? 'outline'} class={nodePhaseClass}>
+					{nodePhase}
 				</Badge>
 			{:else}
 				<Badge variant="outline">Not found</Badge>

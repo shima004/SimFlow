@@ -5,6 +5,7 @@
 	import type { components } from '$lib/api/schema.d.ts';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
 	import { goto, invalidateAll } from '$app/navigation';
 
@@ -32,14 +33,14 @@
 			header: 'Status',
 			cell: (info) => info.getValue()
 		}),
-		col.accessor((w) => w.metadata?.labels?.['map'] ?? '-', {
-			id: 'map',
-			header: 'Map',
-			cell: (info) => info.getValue()
-		}),
 		col.accessor((w) => w.metadata?.labels?.['agent'] ?? '-', {
 			id: 'agent',
 			header: 'Agent',
+			cell: (info) => info.getValue()
+		}),
+		col.accessor((w) => w.metadata?.labels?.['map'] ?? '-', {
+			id: 'map',
+			header: 'Map',
 			cell: (info) => info.getValue()
 		}),
 		col.accessor((w) => w.metadata?.labels?.['score'] ?? '-', {
@@ -68,7 +69,7 @@
 
 	let table = $derived(
 		createTable({
-			data: workflows,
+			data: filteredWorkflows,
 			columns,
 			state: {
 				sorting,
@@ -84,10 +85,25 @@
 		})
 	);
 
+	// --- Filter state ---
+	let filterAgent = $state('');
+	let filterMap = $state('');
+
+	let filteredWorkflows = $derived(
+		workflows.filter((w) => {
+			const agent = w.metadata?.labels?.['agent'] ?? '';
+			const map = w.metadata?.labels?.['map'] ?? '';
+			return (
+				agent.toLowerCase().includes(filterAgent.toLowerCase()) &&
+				map.toLowerCase().includes(filterMap.toLowerCase())
+			);
+		})
+	);
+
 	// --- Multi-select state ---
 	let selected = $state(new Set<string>());
 
-	let allNames = $derived(workflows.map((w) => w.metadata?.name ?? '').filter(Boolean));
+	let allNames = $derived(filteredWorkflows.map((w) => w.metadata?.name ?? '').filter(Boolean));
 	let allSelected = $derived(allNames.length > 0 && allNames.every((n) => selected.has(n)));
 	let someSelected = $derived(selected.size > 0);
 
@@ -168,6 +184,18 @@
 </script>
 
 <!-- Bulk action toolbar -->
+<!-- Filter bar -->
+<div class="mb-2 flex gap-2">
+	<Input placeholder="Filter agent..." bind:value={filterAgent} class="h-8 w-48 text-xs" />
+	<Input placeholder="Filter map..." bind:value={filterMap} class="h-8 w-48 text-xs" />
+	{#if filterAgent || filterMap}
+		<Button size="sm" variant="ghost" class="h-8 text-xs" onclick={() => { filterAgent = ''; filterMap = ''; }}>
+			Clear
+		</Button>
+	{/if}
+	<span class="text-muted-foreground ml-auto self-center text-xs">{filteredWorkflows.length} / {workflows.length}</span>
+</div>
+
 {#if someSelected}
 	<div class="bg-muted mb-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm">
 		<span>{selected.size} selected</span>
@@ -243,7 +271,8 @@
 							<Table.Cell>
 								{#if cell.column.id === 'phase'}
 									{@const phase = cell.getValue() as string}
-									<Badge variant={phaseVariant[phase] ?? 'outline'}>{phase}</Badge>
+									{@const phaseClass = phase === 'Succeeded' ? 'bg-green-500 text-white border-transparent hover:bg-green-500' : phase === 'Running' ? 'bg-blue-500 text-white border-transparent hover:bg-blue-500' : ''}
+									<Badge variant={phaseVariant[phase] ?? 'outline'} class={phaseClass}>{phase}</Badge>
 								{:else if cell.column.id === 'score'}
 									{@const v = cell.getValue() as string}
 									{@const n = Number(v)}
