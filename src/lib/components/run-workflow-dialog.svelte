@@ -132,7 +132,7 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="space-y-4 py-2">
+		<div class="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
 			<!-- Language toggle -->
 			<div class="space-y-1">
 				<p class="text-sm font-medium">Language</p>
