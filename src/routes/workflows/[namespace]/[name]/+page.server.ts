@@ -83,7 +83,8 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	// Build SimScope connection parameters from the workflow
 	const uid = data?.metadata?.uid ?? '';
-	const simscopeHost = uid ? `rrs-server-service-${uid}` : '';
+	const simscopeNs = env.SIMSCOPE_NAMESPACE ?? ns;
+	const simscopeHost = uid ? `rrs-server-service-${uid}.${simscopeNs}.svc.cluster.local` : '';
 	const simscopePort = env.SIMSCOPE_PORT ?? '';
 	const s3Endpoint = env.S3_ENDPOINT ?? '';
 	const s3LogBucket = env.SIMSCOPE_LOG_BUCKET ?? '';

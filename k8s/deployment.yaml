@@ -82,6 +82,12 @@ spec:
                   name: simflow-secret
                   key: SIMSCOPE_PORT
                   optional: true
+            - name: SIMSCOPE_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: SIMSCOPE_NAMESPACE
+                  optional: true
           resources:
             requests:
               cpu: 100m
