@@ -1,12 +1,19 @@
 <script lang="ts">
 	// Generic S3 bucket browser component.
 	// Supports listing, search, upload (presigned PUT), download (presigned GET), and delete.
+	// Upload and delete buttons are shown only when the user has the required permissions.
 	import * as Table from '$lib/components/ui/table';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Badge } from '$lib/components/ui/badge';
+	import { page } from '$app/state';
+	import { can } from '$lib/permissions';
 
 	let { bucket }: { bucket: string } = $props();
+
+	const role = $derived(page.data.user?.role);
+	const canUpload = $derived(can(role, 's3:upload'));
+	const canDelete = $derived(can(role, 's3:delete'));
 
 	type S3Object = {
 		key: string;
@@ -195,10 +202,12 @@
 		</Button>
 
 		<!-- Upload: multiple files supported -->
-		<label class={buttonVariants({ size: 'sm' })} class:opacity-50={uploading} class:pointer-events-none={uploading}>
-			{uploading ? 'Uploading...' : 'Upload'}
-			<input type="file" multiple class="hidden" onchange={upload} disabled={uploading} />
-		</label>
+		{#if canUpload}
+			<label class={buttonVariants({ size: 'sm' })} class:opacity-50={uploading} class:pointer-events-none={uploading}>
+				{uploading ? 'Uploading...' : 'Upload'}
+				<input type="file" multiple class="hidden" onchange={upload} disabled={uploading} />
+			</label>
+		{/if}
 	</div>
 
 	{#if error}
@@ -254,14 +263,16 @@
 									<Button size="sm" variant="outline" onclick={() => download(obj.key)}>
 										Download
 									</Button>
-									<Button
-										size="sm"
-										variant="destructive"
-										disabled={deletingKeys.has(obj.key)}
-										onclick={() => deleteObject(obj.key)}
-									>
-										{deletingKeys.has(obj.key) ? '...' : 'Delete'}
-									</Button>
+									{#if canDelete}
+										<Button
+											size="sm"
+											variant="destructive"
+											disabled={deletingKeys.has(obj.key)}
+											onclick={() => deleteObject(obj.key)}
+										>
+											{deletingKeys.has(obj.key) ? '...' : 'Delete'}
+										</Button>
+									{/if}
 								</div>
 							</Table.Cell>
 						</Table.Row>

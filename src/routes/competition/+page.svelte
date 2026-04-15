@@ -2,9 +2,12 @@
 	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { can } from '$lib/permissions';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	const role = $derived(data.user?.role);
 
 	const CPU_OPTIONS = Array.from({ length: 8 }, (_, i) => `${(i + 1) * 2000}m`);
 	const MEMORY_OPTIONS = Array.from({ length: 8 }, (_, i) => `${(i + 1) * 4}Gi`);
@@ -58,12 +61,14 @@
 <main class="mx-auto max-w-5xl p-6">
 	<div class="mb-6 flex items-center justify-between">
 		<h1 class="text-2xl font-semibold">Competitions</h1>
-		<Button onclick={() => (showForm = !showForm)}>
-			{showForm ? 'Cancel' : 'New Competition'}
-		</Button>
+		{#if can(role, 'competitions:manage')}
+			<Button onclick={() => (showForm = !showForm)}>
+				{showForm ? 'Cancel' : 'New Competition'}
+			</Button>
+		{/if}
 	</div>
 
-	{#if showForm}
+	{#if showForm && can(role, 'competitions:manage')}
 		<form
 			method="POST"
 			action="?/create"

@@ -3,9 +3,12 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { invalidateAll } from '$app/navigation';
+	import { can } from '$lib/permissions';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	const role = $derived(data.user?.role);
 
 	const TEMPLATES = [
 		{ label: 'Python', value: 'rrs-workflow-python' },
@@ -82,40 +85,42 @@
 		<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Refresh</Button>
 	</div>
 
-	<!-- Shared resource settings -->
-	<form
-		method="POST"
-		action="?/updateResources"
-		use:enhance={() => async ({ update }) => { await update(); }}
-		class="bg-muted/40 mb-4 flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3 text-sm"
-	>
-		<span class="font-medium">Resources</span>
-		<label class="flex items-center gap-1.5">
-			<span class="text-muted-foreground text-xs">Server CPU</span>
-			<select name="server_cpu" bind:value={serverCpu} class="border-input bg-background h-7 rounded border px-2 text-xs">
-				{#each CPU_OPTIONS as v}<option value={v}>{v}</option>{/each}
-			</select>
-		</label>
-		<label class="flex items-center gap-1.5">
-			<span class="text-muted-foreground text-xs">Server Memory</span>
-			<select name="server_memory" bind:value={serverMemory} class="border-input bg-background h-7 rounded border px-2 text-xs">
-				{#each MEMORY_OPTIONS as v}<option value={v}>{v}</option>{/each}
-			</select>
-		</label>
-		<label class="flex items-center gap-1.5">
-			<span class="text-muted-foreground text-xs">Agent CPU</span>
-			<select name="agent_cpu" bind:value={agentCpu} class="border-input bg-background h-7 rounded border px-2 text-xs">
-				{#each CPU_OPTIONS as v}<option value={v}>{v}</option>{/each}
-			</select>
-		</label>
-		<label class="flex items-center gap-1.5">
-			<span class="text-muted-foreground text-xs">Agent Memory</span>
-			<select name="agent_memory" bind:value={agentMemory} class="border-input bg-background h-7 rounded border px-2 text-xs">
-				{#each MEMORY_OPTIONS as v}<option value={v}>{v}</option>{/each}
-			</select>
-		</label>
-		<Button type="submit" size="sm" variant="outline" class="h-7">Save</Button>
-	</form>
+	<!-- Shared resource settings (manage only) -->
+	{#if can(role, 'competitions:manage')}
+		<form
+			method="POST"
+			action="?/updateResources"
+			use:enhance={() => async ({ update }) => { await update(); }}
+			class="bg-muted/40 mb-4 flex flex-wrap items-center gap-4 rounded-lg border px-4 py-3 text-sm"
+		>
+			<span class="font-medium">Resources</span>
+			<label class="flex items-center gap-1.5">
+				<span class="text-muted-foreground text-xs">Server CPU</span>
+				<select name="server_cpu" bind:value={serverCpu} class="border-input bg-background h-7 rounded border px-2 text-xs">
+					{#each CPU_OPTIONS as v}<option value={v}>{v}</option>{/each}
+				</select>
+			</label>
+			<label class="flex items-center gap-1.5">
+				<span class="text-muted-foreground text-xs">Server Memory</span>
+				<select name="server_memory" bind:value={serverMemory} class="border-input bg-background h-7 rounded border px-2 text-xs">
+					{#each MEMORY_OPTIONS as v}<option value={v}>{v}</option>{/each}
+				</select>
+			</label>
+			<label class="flex items-center gap-1.5">
+				<span class="text-muted-foreground text-xs">Agent CPU</span>
+				<select name="agent_cpu" bind:value={agentCpu} class="border-input bg-background h-7 rounded border px-2 text-xs">
+					{#each CPU_OPTIONS as v}<option value={v}>{v}</option>{/each}
+				</select>
+			</label>
+			<label class="flex items-center gap-1.5">
+				<span class="text-muted-foreground text-xs">Agent Memory</span>
+				<select name="agent_memory" bind:value={agentMemory} class="border-input bg-background h-7 rounded border px-2 text-xs">
+					{#each MEMORY_OPTIONS as v}<option value={v}>{v}</option>{/each}
+				</select>
+			</label>
+			<Button type="submit" size="sm" variant="outline" class="h-7">Save</Button>
+		</form>
+	{/if}
 
 	<!-- Agent × Map matrix -->
 	<div class="overflow-x-auto rounded-lg border">
@@ -134,19 +139,23 @@
 						<td class="px-3 py-2 font-mono font-medium whitespace-nowrap">
 							<div class="flex flex-col gap-1">
 								<span>{agent}</span>
-								<form method="POST" action="?/setAgentTemplate" use:enhance={() => async ({ update }) => { await update(); await invalidateAll(); }}>
-									<input type="hidden" name="agent" value={agent} />
-									<div class="flex gap-1">
-										{#each TEMPLATES as t}
-											<button
-												type="submit"
-												name="template"
-												value={t.value}
-												class="rounded px-2 py-0.5 text-xs border transition-colors {agentTemplate[agent] === t.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}"
-											>{t.label}</button>
-										{/each}
-									</div>
-								</form>
+								{#if can(role, 'competitions:manage')}
+									<form method="POST" action="?/setAgentTemplate" use:enhance={() => async ({ update }) => { await update(); await invalidateAll(); }}>
+										<input type="hidden" name="agent" value={agent} />
+										<div class="flex gap-1">
+											{#each TEMPLATES as t}
+												<button
+													type="submit"
+													name="template"
+													value={t.value}
+													class="rounded px-2 py-0.5 text-xs border transition-colors {agentTemplate[agent] === t.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted'}"
+												>{t.label}</button>
+											{/each}
+										</div>
+									</form>
+								{:else}
+									<span class="text-muted-foreground text-xs">{agentTemplate[agent] === 'rrs-workflow-java' ? 'Java' : 'Python'}</span>
+								{/if}
 							</div>
 						</td>
 						{#each data.maps as map}
@@ -173,7 +182,7 @@
 										{/if}
 									</div>
 								{/if}
-								{#if run}
+								{#if run && can(role, 'competitions:manage')}
 									<form
 										method="POST"
 										action="?/run"

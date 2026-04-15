@@ -9,7 +9,14 @@
 	import * as Table from '$lib/components/ui/table';
 	import { goto, invalidateAll } from '$app/navigation';
 
-	let { workflows, namespace }: { workflows: Workflow[]; namespace: string } = $props();
+	let { workflows, namespace, canStop = false, canDelete = false }: {
+		workflows: Workflow[];
+		namespace: string;
+		canStop?: boolean;
+		canDelete?: boolean;
+	} = $props();
+
+	const canSelect = $derived(canStop || canDelete);
 	import {
 		createColumnHelper,
 		createTable,
@@ -199,12 +206,16 @@
 {#if someSelected}
 	<div class="bg-muted mb-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm">
 		<span>{selected.size} selected</span>
-		<Button size="sm" variant="outline" onclick={stopSelected} disabled={stopping || deleting}>
-			{stopping ? 'Stopping...' : 'Stop'}
-		</Button>
-		<Button size="sm" variant="destructive" onclick={deleteSelected} disabled={stopping || deleting}>
-			{deleting ? 'Deleting...' : 'Delete'}
-		</Button>
+		{#if canStop}
+			<Button size="sm" variant="outline" onclick={stopSelected} disabled={stopping || deleting}>
+				{stopping ? 'Stopping...' : 'Stop'}
+			</Button>
+		{/if}
+		{#if canDelete}
+			<Button size="sm" variant="destructive" onclick={deleteSelected} disabled={stopping || deleting}>
+				{deleting ? 'Deleting...' : 'Delete'}
+			</Button>
+		{/if}
 		<Button size="sm" variant="ghost" onclick={() => (selected = new Set())} disabled={stopping || deleting}>
 			Clear
 		</Button>
@@ -219,15 +230,17 @@
 		<Table.Header>
 			{#each table.getHeaderGroups() as headerGroup}
 				<Table.Row>
-					<!-- Select-all checkbox -->
-					<Table.Head class="w-10">
-						<input
-							type="checkbox"
-							checked={allSelected}
-							onchange={toggleAll}
-							class="cursor-pointer"
-						/>
-					</Table.Head>
+					<!-- Select-all checkbox (only shown when bulk actions are available) -->
+					{#if canSelect}
+						<Table.Head class="w-10">
+							<input
+								type="checkbox"
+								checked={allSelected}
+								onchange={toggleAll}
+								class="cursor-pointer"
+							/>
+						</Table.Head>
+					{/if}
 					{#each headerGroup.headers as header}
 						<Table.Head
 							class={header.column.getCanSort() ? 'cursor-pointer select-none' : ''}
@@ -258,15 +271,17 @@
 						class="cursor-pointer {selected.has(wfName) ? 'bg-muted/50' : ''}"
 						onclick={() => goto(`/workflows/${namespace}/${wfName}`)}
 					>
-						<!-- Per-row checkbox -->
-						<Table.Cell onclick={(e) => toggleRow(wfName, e)}>
-							<input
-								type="checkbox"
-								checked={selected.has(wfName)}
-								class="cursor-pointer"
-								onchange={() => {}}
-							/>
-						</Table.Cell>
+						<!-- Per-row checkbox (only shown when bulk actions are available) -->
+						{#if canSelect}
+							<Table.Cell onclick={(e) => toggleRow(wfName, e)}>
+								<input
+									type="checkbox"
+									checked={selected.has(wfName)}
+									class="cursor-pointer"
+									onchange={() => {}}
+								/>
+							</Table.Cell>
+						{/if}
 						{#each row.getVisibleCells() as cell}
 							<Table.Cell>
 								{#if cell.column.id === 'phase'}

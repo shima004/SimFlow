@@ -1,9 +1,12 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { can } from '$lib/permissions';
 	import type { LayoutData } from './$types';
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
+
+	const role = $derived(data.user?.role);
 </script>
 
 <svelte:head>
@@ -13,12 +16,20 @@
 
 <nav class="border-b px-6 py-3 flex items-center justify-between">
 	<ul class="flex gap-6 text-sm font-medium">
-		<li><a href="/" class="hover:text-foreground text-muted-foreground">Workflows</a></li>
-		<li><a href="/maps" class="hover:text-foreground text-muted-foreground">Maps</a></li>
-		<li><a href="/agents" class="hover:text-foreground text-muted-foreground">Agents</a></li>
-		<li><a href="/matrix" class="hover:text-foreground text-muted-foreground">Matrix</a></li>
-		<li><a href="/competition" class="hover:text-foreground text-muted-foreground">Competition</a></li>
-		{#if data.user?.role === 'admin'}
+		{#if can(role, 'workflows:view')}
+			<li><a href="/" class="hover:text-foreground text-muted-foreground">Workflows</a></li>
+		{/if}
+		{#if can(role, 's3:view')}
+			<li><a href="/maps" class="hover:text-foreground text-muted-foreground">Maps</a></li>
+			<li><a href="/agents" class="hover:text-foreground text-muted-foreground">Agents</a></li>
+		{/if}
+		{#if can(role, 'workflows:view')}
+			<li><a href="/matrix" class="hover:text-foreground text-muted-foreground">Matrix</a></li>
+		{/if}
+		{#if can(role, 'competitions:view')}
+			<li><a href="/competition" class="hover:text-foreground text-muted-foreground">Competition</a></li>
+		{/if}
+		{#if can(role, 'admin')}
 			<li><a href="/admin" class="hover:text-foreground text-muted-foreground">Admin</a></li>
 		{/if}
 	</ul>
