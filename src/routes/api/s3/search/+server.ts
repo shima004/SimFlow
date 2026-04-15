@@ -1,11 +1,14 @@
 // Searches objects by key prefix and/or suffix (extension) pattern.
 // Paginates through all objects and returns matches.
 // GET /api/s3/search?bucket=<bucket>&prefix=<prefix>&suffix=<suffix>&query=<substring>&maxResults=<n>
+// competition/competition-upload roles can only see their own zip in the agents bucket.
 import { error, json } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getS3Client, assertBucketAllowed } from '$lib/s3';
 import type { RequestHandler } from './$types';
+
+const COMPETITION_ROLES = ['competition', 'competition-upload'];
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	if (!can(locals.user?.role, 's3:view')) error(403, 'Forbidden');
@@ -18,8 +21,12 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		error(403, e instanceof Error ? e.message : String(e));
 	}
 
+	const isCompetitionRole = COMPETITION_ROLES.includes(locals.user?.role ?? '');
+	const restrictToOwn = isCompetitionRole && bucket === 'agents';
+	const ownKey = restrictToOwn ? `${locals.user!.subject}.zip` : null;
+
 	// prefix narrows the S3-side listing; suffix and query are filtered client-side
-	const prefix = url.searchParams.get('prefix') ?? '';
+	const prefix = ownKey ?? (url.searchParams.get('prefix') ?? '');
 	const suffix = url.searchParams.get('suffix') ?? '';
 	const query = url.searchParams.get('query') ?? '';
 	const maxResults = Number(url.searchParams.get('maxResults') ?? '200');
@@ -42,6 +49,8 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 			for (const obj of res.Contents ?? []) {
 				const key = obj.Key ?? '';
+				// Exact-match restriction for competition roles
+				if (ownKey && key !== ownKey) continue;
 				if (suffix && !key.endsWith(suffix)) continue;
 				if (query && !key.includes(query)) continue;
 				results.push({ key, size: obj.Size, lastModified: obj.LastModified });
