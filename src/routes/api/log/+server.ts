@@ -3,9 +3,11 @@
 // - Others: fetches completed logs from the artifact storage endpoint.
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
 	const namespace = url.searchParams.get('namespace');
 	const workflow = url.searchParams.get('workflow');
 	const podName = url.searchParams.get('podName');

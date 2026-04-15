@@ -4,10 +4,12 @@
 // Body: { workflows: { name: string; uid: string }[] }
 import { env } from '$env/dynamic/private';
 import { error, json } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { createArgoClient } from '$lib/api/argo';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
+	if (!can(locals.user?.role, 'workflows:delete')) error(403, 'Forbidden');
 	const baseUrl = env.ARGO_BASE_URL;
 	const namespace = env.ARGO_NAMESPACE;
 	if (!baseUrl || !namespace) error(500, 'ARGO_BASE_URL and ARGO_NAMESPACE are required');

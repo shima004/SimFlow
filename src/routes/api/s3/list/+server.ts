@@ -1,11 +1,13 @@
 // Lists objects in a bucket (or under a prefix).
 // GET /api/s3/list?bucket=<bucket>&prefix=<prefix>&maxKeys=<n>
 import { error, json } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getS3Client, assertBucketAllowed } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (!can(locals.user?.role, 's3:view')) error(403, 'Forbidden');
 	const bucket = url.searchParams.get('bucket');
 	if (!bucket) error(400, 'bucket is required');
 

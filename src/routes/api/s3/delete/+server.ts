@@ -2,11 +2,13 @@
 // DELETE /api/s3/delete
 // Body: { bucket: string; keys: string[] }
 import { error, json } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { getS3Client, assertBucketAllowed } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
-export const DELETE: RequestHandler = async ({ request }) => {
+export const DELETE: RequestHandler = async ({ request, locals }) => {
+	if (!can(locals.user?.role, 's3:delete')) error(403, 'Forbidden');
 	let body: { bucket: string; keys: string[] };
 	try {
 		body = await request.json();

@@ -2,10 +2,12 @@
 // Handles listing all competitions and creating a new one.
 import { getDb } from '$lib/db';
 import { listBucketKeys } from '$lib/s3';
-import { fail, redirect } from '@sveltejs/kit';
+import { can } from '$lib/auth';
+import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	if (!can(locals.user?.role, 'competitions:view')) error(403, 'Forbidden');
 	const db = getDb();
 	const competitions = db.prepare('SELECT * FROM competitions ORDER BY created_at DESC').all() as import('$lib/db').Competition[];
 
@@ -22,7 +24,8 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
+		if (!can(locals.user?.role, 'competitions:manage')) return fail(403, { error: 'Forbidden' });
 		const form = await request.formData();
 		const name = (form.get('name') as string)?.trim();
 		const agents = form.getAll('agents') as string[];

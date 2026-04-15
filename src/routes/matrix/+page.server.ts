@@ -3,6 +3,7 @@
 // from Argo Workflows labels (agent, map, score).
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getS3Client } from '$lib/s3';
 import { createArgoClient } from '$lib/api/argo';
@@ -35,7 +36,9 @@ async function listBucketKeys(bucket: string): Promise<string[]> {
 	return keys;
 }
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
+
 	const baseUrl = env.ARGO_BASE_URL;
 	const namespace = env.ARGO_NAMESPACE;
 

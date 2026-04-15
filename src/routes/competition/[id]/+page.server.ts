@@ -4,12 +4,14 @@ import { getDb } from '$lib/db';
 import { createArgoClient } from '$lib/api/argo';
 import { env } from '$env/dynamic/private';
 import { error, fail } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import type { Actions, PageServerLoad } from './$types';
 import type { Competition, CompetitionRun } from '$lib/db';
 
 const ALLOWED_TEMPLATES = ['rrs-workflow-python', 'rrs-workflow-java'] as const;
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	if (!can(locals.user?.role, 'competitions:view')) error(403, 'Forbidden');
 	const db = getDb();
 	const id = Number(params.id);
 
@@ -62,7 +64,8 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-	updateResources: async ({ request, params }) => {
+	updateResources: async ({ request, params, locals }) => {
+		if (!can(locals.user?.role, 'competitions:manage')) return fail(403, { error: 'Forbidden' });
 		const db = getDb();
 		const id = Number(params.id);
 		const form = await request.formData();
@@ -76,7 +79,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	setAgentTemplate: async ({ request, params }) => {
+	setAgentTemplate: async ({ request, params, locals }) => {
+		if (!can(locals.user?.role, 'competitions:manage')) return fail(403, { error: 'Forbidden' });
 		const db = getDb();
 		const competitionId = Number(params.id);
 		const form = await request.formData();
@@ -92,7 +96,8 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	run: async ({ request, params }) => {
+	run: async ({ request, params, locals }) => {
+		if (!can(locals.user?.role, 'competitions:manage')) return fail(403, { error: 'Forbidden' });
 		const db = getDb();
 		const competitionId = Number(params.id);
 		const form = await request.formData();

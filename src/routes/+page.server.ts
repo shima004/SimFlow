@@ -3,11 +3,13 @@
 // be injected at container startup without rebuilding the image.
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { createArgoClient } from '$lib/api/argo';
 import { listBucketKeys } from '$lib/s3';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
 	const baseUrl = env.ARGO_BASE_URL;
 	const namespace = env.ARGO_NAMESPACE;
 

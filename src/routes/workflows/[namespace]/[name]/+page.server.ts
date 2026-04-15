@@ -4,9 +4,11 @@
 import { env } from '$env/dynamic/private';
 import { createArgoClient } from '$lib/api/argo';
 import { error } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
 	const baseUrl = env.ARGO_BASE_URL;
 
 	if (!baseUrl) {

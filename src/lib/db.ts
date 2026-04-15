@@ -16,6 +16,13 @@ export function getDb(): Database.Database {
 
 function migrate(db: Database.Database) {
 	db.exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id         INTEGER PRIMARY KEY AUTOINCREMENT,
+			subject    TEXT NOT NULL UNIQUE,
+			role       TEXT NOT NULL DEFAULT 'viewer',
+			created_at TEXT NOT NULL DEFAULT (datetime('now'))
+		);
+
 		CREATE TABLE IF NOT EXISTS competitions (
 			id            INTEGER PRIMARY KEY AUTOINCREMENT,
 			name          TEXT NOT NULL,
@@ -51,6 +58,13 @@ function migrate(db: Database.Database) {
 	if (!cols.includes('agent_cpu'))     db.exec(`ALTER TABLE competitions ADD COLUMN agent_cpu TEXT NOT NULL DEFAULT '4000m'`);
 	if (!cols.includes('agent_memory'))  db.exec(`ALTER TABLE competitions ADD COLUMN agent_memory TEXT NOT NULL DEFAULT '8Gi'`);
 }
+
+export type User = {
+	id: number;
+	subject: string;
+	role: 'admin' | 'operator' | 'competition-upload' | 'competition' | 'viewer';
+	created_at: string;
+};
 
 export type Competition = {
 	id: number;

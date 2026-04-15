@@ -1,12 +1,14 @@
 // Issues a presigned S3 GET URL for an artifact and redirects the browser to it.
 // GET /api/artifact?bucket=<bucket>&key=<s3key>&filename=<filename>
 import { error, redirect } from '@sveltejs/kit';
+import { can } from '$lib/auth';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, assertBucketAllowed } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ url }) => {
+export const GET: RequestHandler = async ({ url, locals }) => {
+	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
 	const bucket = url.searchParams.get('bucket');
 	const key = url.searchParams.get('key');
 	const filename = url.searchParams.get('filename');
