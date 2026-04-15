@@ -9,7 +9,7 @@ import { listBucketKeys } from '$lib/s3';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!can(locals.user?.role, 'workflows:view')) error(403, 'Forbidden');
+	if (!can(locals.user?.role, 'workflows:list')) error(403, 'Forbidden');
 	const baseUrl = env.ARGO_BASE_URL;
 	const namespace = env.ARGO_NAMESPACE;
 

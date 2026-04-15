@@ -29,6 +29,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const maxKeys = Number(url.searchParams.get('maxKeys') ?? '1000');
 	const continuationToken = url.searchParams.get('continuationToken') ?? undefined;
 
+	// Block competition roles from the maps bucket entirely
+	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+
 	// competition roles may only see their own zip in the agents bucket
 	const restrictToOwn = isCompetitionRole(locals.user?.role) && bucket === 'agents';
 	const ownKey = restrictToOwn ? `${locals.user!.subject}.zip` : null;

@@ -9,6 +9,7 @@ import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ request, locals }) => {
 	if (!can(locals.user?.role, 's3:delete')) error(403, 'Forbidden');
+
 	let body: { bucket: string; keys: string[] };
 	try {
 		body = await request.json();
@@ -21,6 +22,9 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 	if (!Array.isArray(keys) || keys.length === 0) {
 		error(400, 'keys must be a non-empty array');
 	}
+
+	// Block competition roles from the maps bucket
+	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
 
 	try {
 		assertBucketAllowed(bucket);

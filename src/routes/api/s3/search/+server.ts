@@ -21,6 +21,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		error(403, e instanceof Error ? e.message : String(e));
 	}
 
+	// Block competition roles from the maps bucket entirely
+	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+
 	const isCompetitionRole = COMPETITION_ROLES.includes(locals.user?.role ?? '');
 	const restrictToOwn = isCompetitionRole && bucket === 'agents';
 	const ownKey = restrictToOwn ? `${locals.user!.subject}.zip` : null;

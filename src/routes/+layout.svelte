@@ -16,14 +16,16 @@
 
 <nav class="border-b px-6 py-3 flex items-center justify-between">
 	<ul class="flex gap-6 text-sm font-medium">
-		{#if can(role, 'workflows:view')}
+		{#if can(role, 'workflows:list')}
 			<li><a href="/" class="hover:text-foreground text-muted-foreground">Workflows</a></li>
 		{/if}
-		{#if can(role, 's3:view')}
+		{#if can(role, 's3:maps:view')}
 			<li><a href="/maps" class="hover:text-foreground text-muted-foreground">Maps</a></li>
+		{/if}
+		{#if can(role, 's3:view')}
 			<li><a href="/agents" class="hover:text-foreground text-muted-foreground">Agents</a></li>
 		{/if}
-		{#if can(role, 'workflows:view')}
+		{#if can(role, 'workflows:list')}
 			<li><a href="/matrix" class="hover:text-foreground text-muted-foreground">Matrix</a></li>
 		{/if}
 		{#if can(role, 'competitions:view')}

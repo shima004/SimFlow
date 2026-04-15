@@ -36,6 +36,9 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const requiredPermission = operation === 'put' ? 's3:upload' : 's3:view';
 	if (!can(locals.user?.role, requiredPermission)) error(403, 'Forbidden');
 
+	// Block competition roles from the maps bucket entirely
+	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+
 	const isCompetitionRole = COMPETITION_ROLES.includes(locals.user?.role ?? '');
 	const ownKey = `${locals.user?.subject}.zip`;
 
