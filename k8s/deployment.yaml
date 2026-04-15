@@ -14,6 +14,10 @@ spec:
       labels:
         app: simflow
     spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: simflow-data
       containers:
         - name: simflow
           image: simflow:latest
@@ -21,6 +25,9 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            # SQLite database path
+            - name: DB_PATH
+              value: /data/simflow.db
             # Argo Workflows
             - name: ARGO_BASE_URL
               valueFrom:
@@ -88,6 +95,9 @@ spec:
                   name: simflow-secret
                   key: SIMSCOPE_NAMESPACE
                   optional: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
           resources:
             requests:
               cpu: 100m
