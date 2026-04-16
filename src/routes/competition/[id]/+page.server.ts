@@ -5,10 +5,9 @@ import { createArgoClient } from '$lib/api/argo';
 import { env } from '$env/dynamic/private';
 import { error, fail } from '@sveltejs/kit';
 import { can } from '$lib/auth';
+import { getWorkflowTemplates } from '$lib/config';
 import type { Actions, PageServerLoad } from './$types';
 import type { Competition, CompetitionRun } from '$lib/db';
-
-const ALLOWED_TEMPLATES = ['rrs-workflow-python', 'rrs-workflow-java'] as const;
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!can(locals.user?.role, 'competitions:view')) error(403, 'Forbidden');
@@ -87,7 +86,8 @@ export const actions: Actions = {
 		const agent = form.get('agent') as string;
 		const template = form.get('template') as string;
 		if (!agent) return fail(400, { error: 'agent is required' });
-		if (!(ALLOWED_TEMPLATES as readonly string[]).includes(template)) {
+		const allowedTemplates = getWorkflowTemplates().map((t) => t.value);
+		if (!allowedTemplates.includes(template)) {
 			return fail(400, { error: 'Invalid template' });
 		}
 		db.prepare(

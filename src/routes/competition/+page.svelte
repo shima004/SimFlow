@@ -18,7 +18,7 @@
 	let selectedMaps = $state(new Set<string>());
 	let agentSearch = $state('');
 	let mapSearch = $state('');
-	let template = $state('rrs-workflow-python');
+	let template = $state('');
 	let serverCpu = $state('4000m');
 	let serverMemory = $state('8Gi');
 	let agentCpu = $state('4000m');

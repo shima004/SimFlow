@@ -4,11 +4,9 @@
 import { env } from '$env/dynamic/private';
 import { error, json } from '@sveltejs/kit';
 import { can } from '$lib/auth';
+import { getWorkflowTemplates } from '$lib/config';
 import { createArgoClient } from '$lib/api/argo';
 import type { RequestHandler } from './$types';
-
-const ALLOWED_TEMPLATES = ['rrs-workflow-python', 'rrs-workflow-java'] as const;
-type Template = (typeof ALLOWED_TEMPLATES)[number];
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!can(locals.user?.role, 'workflows:run')) error(403, 'Forbidden');
@@ -20,8 +18,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		error(500, 'ARGO_BASE_URL and ARGO_NAMESPACE are required');
 	}
 
+	const allowedTemplates = getWorkflowTemplates().map((t) => t.value);
+
 	let body: {
-		template: Template;
+		template: string;
 		agent: string;
 		map: string;
 		tag?: string;
@@ -38,8 +38,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const { template, agent, map, tag, serverCpu, serverMemory, agentCpu, agentMemory } = body;
 	if (!template || !agent || !map) error(400, 'template, agent, and map are required');
-	if (!(ALLOWED_TEMPLATES as readonly string[]).includes(template)) {
-		error(400, `template must be one of: ${ALLOWED_TEMPLATES.join(', ')}`);
+	if (!allowedTemplates.includes(template)) {
+		error(400, `template must be one of: ${allowedTemplates.join(', ')}`);
 	}
 
 	const client = createArgoClient(baseUrl, env.ARGO_TOKEN);

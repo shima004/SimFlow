@@ -51,4 +51,5 @@
 	onsubmitted={(names) => (submittedNames = names)}
 	agentKeys={data.agentKeys}
 	mapKeys={data.mapKeys}
+	templates={data.workflowTemplates}
 />

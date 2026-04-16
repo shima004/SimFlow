@@ -4,7 +4,7 @@
 import { error, json } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { DeleteObjectsCommand } from '@aws-sdk/client-s3';
-import { getS3Client, assertBucketAllowed } from '$lib/s3';
+import { getS3Client, assertBucketAllowed, getMapsBucket } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ request, locals }) => {
@@ -24,7 +24,7 @@ export const DELETE: RequestHandler = async ({ request, locals }) => {
 	}
 
 	// Block competition roles from the maps bucket
-	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+	if (bucket === getMapsBucket() && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
 
 	try {
 		assertBucketAllowed(bucket);

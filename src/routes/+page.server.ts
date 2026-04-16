@@ -5,7 +5,7 @@ import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { createArgoClient } from '$lib/api/argo';
-import { listBucketKeys } from '$lib/s3';
+import { listBucketKeys, getAgentsBucket, getMapsBucket } from '$lib/s3';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -28,8 +28,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 				}
 			}
 		}),
-		listBucketKeys('agents').catch(() => [] as string[]),
-		listBucketKeys('maps').catch(() => [] as string[])
+		listBucketKeys(getAgentsBucket()).catch(() => [] as string[]),
+		listBucketKeys(getMapsBucket()).catch(() => [] as string[])
 	]);
 
 	if (apiError) {

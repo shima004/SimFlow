@@ -27,6 +27,16 @@ export function getS3Client(): S3Client {
 	return _client;
 }
 
+// Returns the agents bucket name from S3_AGENTS_BUCKET (default: 'agents').
+export function getAgentsBucket(): string {
+	return env.S3_AGENTS_BUCKET ?? 'agents';
+}
+
+// Returns the maps bucket name from S3_MAPS_BUCKET (default: 'maps').
+export function getMapsBucket(): string {
+	return env.S3_MAPS_BUCKET ?? 'maps';
+}
+
 // Returns the list of allowed bucket names from S3_ALLOWED_BUCKETS (comma-separated).
 export function getAllowedBuckets(): string[] {
 	const raw = env.S3_ALLOWED_BUCKETS;

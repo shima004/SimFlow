@@ -4,37 +4,9 @@
 import { env } from '$env/dynamic/private';
 import { error } from '@sveltejs/kit';
 import { can } from '$lib/auth';
-import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { getS3Client } from '$lib/s3';
+import { getAgentsBucket, getMapsBucket, listBucketKeys, stripExt } from '$lib/s3';
 import { createArgoClient } from '$lib/api/argo';
 import type { PageServerLoad } from './$types';
-
-// Strips the file extension from a key (e.g. "agent1.py" → "agent1")
-function stripExt(key: string): string {
-	const slash = key.lastIndexOf('/');
-	const base = key.slice(slash + 1);
-	const dot = base.lastIndexOf('.');
-	if (dot <= 0) return key; // no extension or hidden file
-	return key.slice(0, slash + 1 + dot);
-}
-
-async function listBucketKeys(bucket: string): Promise<string[]> {
-	const client = getS3Client();
-	const keys: string[] = [];
-	let continuationToken: string | undefined;
-
-	do {
-		const res = await client.send(
-			new ListObjectsV2Command({ Bucket: bucket, MaxKeys: 1000, ContinuationToken: continuationToken })
-		);
-		for (const obj of res.Contents ?? []) {
-			if (obj.Key) keys.push(stripExt(obj.Key));
-		}
-		continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
-	} while (continuationToken);
-
-	return keys;
-}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!can(locals.user?.role, 'workflows:list')) error(403, 'Forbidden');
@@ -48,8 +20,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// Fetch agents, maps, and workflows in parallel
 	const [agentKeys, mapKeys, workflowsResult] = await Promise.all([
-		listBucketKeys('agents').catch(() => [] as string[]),
-		listBucketKeys('maps').catch(() => [] as string[]),
+		listBucketKeys(getAgentsBucket()).catch(() => [] as string[]),
+		listBucketKeys(getMapsBucket()).catch(() => [] as string[]),
 		createArgoClient(baseUrl, env.ARGO_TOKEN)
 			.GET('/api/v1/workflows/{namespace}', {
 				params: {

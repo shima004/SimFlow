@@ -10,10 +10,7 @@
 
 	const role = $derived(data.user?.role);
 
-	const TEMPLATES = [
-		{ label: 'Python', value: 'rrs-workflow-python' },
-		{ label: 'Java', value: 'rrs-workflow-java' }
-	] as const;
+	const TEMPLATES = $derived(data.workflowTemplates ?? []);
 
 	// Per-cell submitting state keyed by run id
 	let submitting = $state(new Set<number>());
@@ -47,8 +44,9 @@
 	let agentTemplate = $state<Record<string, string>>({});
 
 	$effect(() => {
+		const defaultTemplate = TEMPLATES[0]?.value ?? '';
 		agentTemplate = Object.fromEntries(
-			data.agents.map((a) => [a, data.agentTemplates[a] ?? 'rrs-workflow-python'])
+			data.agents.map((a) => [a, data.agentTemplates[a] ?? defaultTemplate])
 		);
 	});
 
@@ -154,7 +152,7 @@
 										</div>
 									</form>
 								{:else}
-									<span class="text-muted-foreground text-xs">{agentTemplate[agent] === 'rrs-workflow-java' ? 'Java' : 'Python'}</span>
+									<span class="text-muted-foreground text-xs">{TEMPLATES.find((t) => t.value === agentTemplate[agent])?.label ?? agentTemplate[agent]}</span>
 								{/if}
 							</div>
 						</td>

@@ -4,7 +4,7 @@
 import { error, json } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { getS3Client, assertBucketAllowed } from '$lib/s3';
+import { getS3Client, assertBucketAllowed, getAgentsBucket, getMapsBucket } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
 // Roles that are restricted to their own agent file in the agents bucket
@@ -30,10 +30,10 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const continuationToken = url.searchParams.get('continuationToken') ?? undefined;
 
 	// Block competition roles from the maps bucket entirely
-	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+	if (bucket === getMapsBucket() && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
 
 	// competition roles may only see their own zip in the agents bucket
-	const restrictToOwn = isCompetitionRole(locals.user?.role) && bucket === 'agents';
+	const restrictToOwn = isCompetitionRole(locals.user?.role) && bucket === getAgentsBucket();
 	const ownKey = restrictToOwn ? `${locals.user!.subject}.zip` : null;
 
 	try {

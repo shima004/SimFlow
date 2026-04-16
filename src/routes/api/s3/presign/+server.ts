@@ -7,7 +7,7 @@ import { error, json } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { getS3Client, assertBucketAllowed } from '$lib/s3';
+import { getS3Client, assertBucketAllowed, getAgentsBucket, getMapsBucket } from '$lib/s3';
 import type { RequestHandler } from './$types';
 
 const COMPETITION_ROLES = ['competition', 'competition-upload'];
@@ -37,14 +37,14 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	if (!can(locals.user?.role, requiredPermission)) error(403, 'Forbidden');
 
 	// Block competition roles from the maps bucket entirely
-	if (bucket === 'maps' && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
+	if (bucket === getMapsBucket() && !can(locals.user?.role, 's3:maps:view')) error(403, 'Forbidden');
 
 	const isCompetitionRole = COMPETITION_ROLES.includes(locals.user?.role ?? '');
 	const ownKey = `${locals.user?.subject}.zip`;
 
 	// Determine the effective S3 key
 	let effectiveKey = requestedKey;
-	if (isCompetitionRole && bucket === 'agents') {
+	if (isCompetitionRole && bucket === getAgentsBucket()) {
 		if (operation === 'put') {
 			// Always write to the user's own key, ignoring the requested key
 			effectiveKey = ownKey;

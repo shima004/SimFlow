@@ -1,7 +1,7 @@
 // Server load and actions for competition list page.
 // Handles listing all competitions and creating a new one.
 import { getDb } from '$lib/db';
-import { listBucketKeys } from '$lib/s3';
+import { listBucketKeys, getAgentsBucket, getMapsBucket } from '$lib/s3';
 import { can } from '$lib/auth';
 import { fail, redirect, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -12,8 +12,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const competitions = db.prepare('SELECT * FROM competitions ORDER BY created_at DESC').all() as import('$lib/db').Competition[];
 
 	const [agentKeys, mapKeys] = await Promise.all([
-		listBucketKeys('agents').catch(() => [] as string[]),
-		listBucketKeys('maps').catch(() => [] as string[])
+		listBucketKeys(getAgentsBucket()).catch(() => [] as string[]),
+		listBucketKeys(getMapsBucket()).catch(() => [] as string[])
 	]);
 
 	return {

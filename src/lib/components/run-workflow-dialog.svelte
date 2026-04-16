@@ -5,23 +5,21 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 
+	import type { WorkflowTemplate } from '$lib/config';
+
 	type Props = {
 		open: boolean;
 		onclose: () => void;
 		onsubmitted: (names: string[]) => void;
 		agentKeys: string[];
 		mapKeys: string[];
+		templates: WorkflowTemplate[];
 	};
 
-	let { open = $bindable(), onclose, onsubmitted, agentKeys, mapKeys }: Props = $props();
+	let { open = $bindable(), onclose, onsubmitted, agentKeys, mapKeys, templates }: Props = $props();
 
-	const LANGUAGES = [
-		{ label: 'Python', template: 'rrs-workflow-python' },
-		{ label: 'Java', template: 'rrs-workflow-java' }
-	] as const;
-	type Language = (typeof LANGUAGES)[number];
-
-	let language = $state<Language>(LANGUAGES[0]);
+	let selectedTemplate = $state('');
+	$effect(() => { if (!selectedTemplate && templates.length) selectedTemplate = templates[0].value; });
 	let selectedAgents = $state(new Set<string>());
 	let selectedMaps = $state(new Set<string>());
 	let tag = $state('default');
@@ -93,7 +91,7 @@
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
-						template: language.template,
+						template: selectedTemplate,
 						agent,
 						map,
 						tag: tag || 'default',
@@ -133,20 +131,20 @@
 		</Dialog.Header>
 
 		<div class="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
-			<!-- Language toggle -->
+			<!-- Template toggle -->
 			<div class="space-y-1">
-				<p class="text-sm font-medium">Language</p>
+				<p class="text-sm font-medium">Template</p>
 				<div class="flex gap-2">
-					{#each LANGUAGES as lang}
+					{#each templates as t}
 						<button
 							class="rounded-md border px-4 py-1.5 text-sm transition-colors"
-							class:bg-primary={language.template === lang.template}
-							class:text-primary-foreground={language.template === lang.template}
-							class:border-primary={language.template === lang.template}
-							class:border-border={language.template !== lang.template}
-							onclick={() => (language = lang)}
+							class:bg-primary={selectedTemplate === t.value}
+							class:text-primary-foreground={selectedTemplate === t.value}
+							class:border-primary={selectedTemplate === t.value}
+							class:border-border={selectedTemplate !== t.value}
+							onclick={() => (selectedTemplate = t.value)}
 						>
-							{lang.label}
+							{t.label}
 						</button>
 					{/each}
 				</div>

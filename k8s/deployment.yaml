@@ -69,6 +69,27 @@ spec:
                 secretKeyRef:
                   name: simflow-secret
                   key: ARGO_TOKEN
+                  optional: true
+            # S3 bucket names
+            - name: S3_AGENTS_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_AGENTS_BUCKET
+                  optional: true
+            - name: S3_MAPS_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: S3_MAPS_BUCKET
+                  optional: true
+            # Workflow templates
+            - name: WORKFLOW_TEMPLATES
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: WORKFLOW_TEMPLATES
+                  optional: true
             # S3
             - name: S3_ENDPOINT
               valueFrom:
@@ -132,13 +153,13 @@ spec:
               memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /
+              path: /login
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /login
               port: 3000
             initialDelaySeconds: 15
             periodSeconds: 30
