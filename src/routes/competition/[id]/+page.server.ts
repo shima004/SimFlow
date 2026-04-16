@@ -60,7 +60,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		agentTemplates[run.agent] = run.template;
 	}
 
-	return { competition, runs, agents, maps, workflowStatus, agentTemplates };
+	return { competition, runs, agents, maps, workflowStatus, agentTemplates, namespace: env.ARGO_NAMESPACE ?? 'argo' };
 };
 
 export const actions: Actions = {

@@ -74,9 +74,9 @@
 <main class="mx-auto max-w-7xl p-6">
 	<div class="mb-4 flex items-start justify-between gap-4">
 		<div>
-			<a href="/competition" class="text-muted-foreground hover:text-foreground mb-1 inline-block text-sm">
+			<button onclick={() => history.back()} class="text-muted-foreground hover:text-foreground mb-1 inline-block text-sm">
 				← Competitions
-			</a>
+			</button>
 			<h1 class="text-2xl font-semibold">{data.competition.name}</h1>
 			<p class="text-muted-foreground text-sm">
 				{data.agents.length} agents × {data.maps.length} maps = {data.runs.length} runs
@@ -174,7 +174,7 @@
 										{/if}
 										{#if run?.workflow_name}
 											<a
-												href="/workflows/{data.competition.name}/{run.workflow_name}"
+												href="/workflows/{data.namespace}/{run.workflow_name}"
 												class="text-xs text-blue-500 hover:underline font-mono truncate max-w-[160px] block"
 											>
 												{run.workflow_name}

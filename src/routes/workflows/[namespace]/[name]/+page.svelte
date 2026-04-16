@@ -51,9 +51,9 @@
 
 <main class="mx-auto max-w-5xl p-6">
 	<div class="mb-6">
-		<a href="/" class="text-muted-foreground hover:text-foreground mb-2 inline-block text-sm">
+		<button onclick={() => history.back()} class="text-muted-foreground hover:text-foreground mb-2 inline-block text-sm">
 			← Back
-		</a>
+		</button>
 		<div class="flex items-center justify-between gap-3">
 		<div class="flex items-center gap-3">
 			<h1 class="font-mono text-2xl font-semibold">{wf.metadata?.name}</h1>
