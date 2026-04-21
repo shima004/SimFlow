@@ -25,6 +25,12 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            # App origin — must match the URL users access the app from (required for CSRF protection)
+            - name: ORIGIN
+              valueFrom:
+                secretKeyRef:
+                  name: simflow-secret
+                  key: ORIGIN
             # Authentication
             - name: JWT_SECRET
               valueFrom:
@@ -90,27 +96,31 @@ spec:
                   name: simflow-secret
                   key: WORKFLOW_TEMPLATES
                   optional: true
-            # S3
+            # S3 — endpoint/region/creds are all optional when using IRSA
             - name: S3_ENDPOINT
               valueFrom:
                 secretKeyRef:
                   name: simflow-secret
                   key: S3_ENDPOINT
+                  optional: true
             - name: S3_REGION
               valueFrom:
                 secretKeyRef:
                   name: simflow-secret
                   key: S3_REGION
+                  optional: true
             - name: S3_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: simflow-secret
                   key: S3_ACCESS_KEY_ID
+                  optional: true
             - name: S3_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: simflow-secret
                   key: S3_SECRET_ACCESS_KEY
+                  optional: true
             - name: S3_ALLOWED_BUCKETS
               valueFrom:
                 secretKeyRef:

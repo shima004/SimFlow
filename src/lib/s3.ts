@@ -13,16 +13,18 @@ export function getS3Client(): S3Client {
 	const accessKeyId = env.S3_ACCESS_KEY_ID;
 	const secretAccessKey = env.S3_SECRET_ACCESS_KEY;
 
-	if (!endpoint || !accessKeyId || !secretAccessKey) {
-		throw new Error('S3_ENDPOINT, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required');
-	}
+	const hasStaticCreds = accessKeyId && secretAccessKey;
 
 	_client = new S3Client({
-		endpoint,
 		region,
-		credentials: { accessKeyId, secretAccessKey },
-		// Required for path-style access (MinIO, Ceph, etc.)
-		forcePathStyle: true
+		// Only set endpoint for S3-compatible storage (MinIO, Ceph, etc.)
+		// Omit for AWS S3 to use the standard regional endpoint
+		...(endpoint ? { endpoint } : {}),
+		// Use static credentials when provided; otherwise fall back to the
+		// default credential chain (IRSA, EC2 IMDSv2, env vars, ~/.aws, etc.)
+		...(hasStaticCreds ? { credentials: { accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey! } } : {}),
+		// Path-style is required for MinIO/Ceph but must be false for AWS S3
+		forcePathStyle: !!endpoint
 	});
 	return _client;
 }
