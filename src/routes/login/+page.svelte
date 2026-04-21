@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -15,7 +13,7 @@
 			<p class="text-muted-foreground mt-1 text-sm">JWTトークンでログイン</p>
 		</div>
 
-		<form method="POST" use:enhance class="space-y-4">
+		<form method="POST" class="space-y-4">
 			{#if form?.error}
 				<p class="text-destructive rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm">
 					{form.error}
