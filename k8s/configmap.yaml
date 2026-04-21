@@ -1,0 +1,39 @@
+# Template for ConfigMap — fill in values before applying.
+# Apply with: kubectl apply -f k8s/configmap.yaml
+# Safe to commit (no secrets here).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: simflow-config
+  namespace: simflow
+data:
+  # App origin (required) — must match the URL users access the app from
+  ORIGIN: '' # e.g. http://192.168.1.100
+
+  # Authentication
+  ADMIN_SUBJECT: '' # e.g. admin@example.com  (auto-creates admin on first login)
+
+  # Argo Workflows
+  ARGO_BASE_URL: '' # e.g. http://argo-server:2746
+  ARGO_NAMESPACE: '' # e.g. argo
+
+  # S3 / S3-compatible storage
+  # For AWS S3 with IRSA: omit S3_ENDPOINT (uses standard AWS endpoint).
+  # For MinIO / Ceph: set S3_ENDPOINT.
+  # S3_ENDPOINT: ""        # e.g. http://minio:9000  (omit for AWS S3)
+  # S3_REGION: ""          # e.g. us-east-1          (omit to default to us-east-1)
+  S3_ALLOWED_BUCKETS: '' # e.g. agents,maps
+
+
+  # S3 bucket names (optional — defaults: agents / maps)
+  # S3_AGENTS_BUCKET: ""   # e.g. agents
+  # S3_MAPS_BUCKET: ""     # e.g. maps
+
+  # Workflow templates (optional — default: rrs-workflow-python:Python,rrs-workflow-java:Java)
+  # WORKFLOW_TEMPLATES: "" # e.g. rrs-workflow-python:Python,rrs-workflow-java:Java
+
+  # SimScope viewer (all optional)
+  # SIMSCOPE_BASE_URL: ""  # e.g. http://simscope:3000
+  # SIMSCOPE_LOG_BUCKET: "" # e.g. rrs-logs
+  # SIMSCOPE_PORT: ""      # e.g. 27931
+  # SIMSCOPE_NAMESPACE: "" # e.g. argo  (omit to use workflow's namespace)
