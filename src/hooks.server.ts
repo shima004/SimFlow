@@ -2,7 +2,24 @@
 import { verifyJwt } from '$lib/auth';
 import { getDb } from '$lib/db';
 import type { User } from '$lib/db';
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, ServerInit } from '@sveltejs/kit';
+
+// On startup, generate and log a JWT for the admin account so the operator
+// can copy it to the login page without needing an external token issuer.
+export const init: ServerInit = async () => {
+	const { env } = await import('$env/dynamic/private');
+	if (!env.ADMIN_SUBJECT || !env.JWT_SECRET) return;
+
+	const { SignJWT } = await import('jose');
+	const key = new TextEncoder().encode(env.JWT_SECRET);
+	const token = await new SignJWT()
+		.setProtectedHeader({ alg: 'HS256' })
+		.setSubject(env.ADMIN_SUBJECT)
+		.setIssuedAt()
+		.sign(key);
+
+	console.log(`[simflow] Admin JWT (subject: ${env.ADMIN_SUBJECT}):\n${token}`);
+};
 
 const PUBLIC_PATHS = ['/login'];
 
