@@ -38,18 +38,6 @@ spec:
                   name: simflow-secret
                   key: JWT_SECRET
                   optional: true
-            - name: JWT_PUBLIC_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: simflow-secret
-                  key: JWT_PUBLIC_KEY
-                  optional: true
-            - name: JWT_ALGORITHM
-              valueFrom:
-                secretKeyRef:
-                  name: simflow-secret
-                  key: JWT_ALGORITHM
-                  optional: true
             - name: ADMIN_SUBJECT
               valueFrom:
                 secretKeyRef:
