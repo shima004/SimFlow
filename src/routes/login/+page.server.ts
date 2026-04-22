@@ -37,8 +37,8 @@ export const actions: Actions = {
 		cookies.set('token', token, {
 			httpOnly: true,
 			sameSite: 'lax',
+			secure: true,
 			path: '/',
-			// Expire when the browser session ends (or use JWT exp claim)
 			maxAge: 60 * 60 * 24 * 7
 		});
 
