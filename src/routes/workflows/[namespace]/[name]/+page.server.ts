@@ -3,8 +3,8 @@
 // from the artifact-files endpoint using each node's main-logs artifact.
 import { env } from '$env/dynamic/private';
 import { createArgoClient } from '$lib/api/argo';
-import { error } from '@sveltejs/kit';
 import { can } from '$lib/auth';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -88,12 +88,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const simscopeNs = env.SIMSCOPE_NAMESPACE ?? ns;
 	const simscopeHost = uid ? `rrs-server-service-${uid}.${simscopeNs}.svc.cluster.local` : '';
 	const simscopePort = env.SIMSCOPE_PORT ?? '';
-	const s3Endpoint = env.S3_ENDPOINT ?? '';
 	const s3LogBucket = env.SIMSCOPE_LOG_BUCKET ?? '';
+	function buildS3ObjectUrl(bucket: string, key: string): string {
+		if (env.S3_ENDPOINT) {
+			// MinIO / Ceph: path-style URL using the custom endpoint
+			return `${env.S3_ENDPOINT.replace(/\/$/, '')}/${bucket}/${key}`;
+		}
+		// AWS S3: virtual-hosted style
+		const region = env.S3_REGION ?? 'us-east-1';
+		return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+	}
 	const simscopeUrl =
-		s3Endpoint && s3LogBucket && uid
-			? `${s3Endpoint.replace(/\/$/, '')}/${s3LogBucket}/${uid}/rescue.log.7z`
-			: '';
+		s3LogBucket && uid ? buildS3ObjectUrl(s3LogBucket, `${uid}/rescue.log.7z`) : '';
 
 	return {
 		workflow: data!,
