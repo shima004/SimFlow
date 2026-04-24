@@ -120,6 +120,45 @@
 		</form>
 	{/if}
 
+	<!-- Ranking table -->
+	{#if data.ranking.length > 0}
+		<section class="mb-6">
+			<h2 class="mb-2 text-base font-semibold">Ranking</h2>
+			<div class="overflow-x-auto rounded-lg border">
+				<table class="text-sm">
+					<thead>
+						<tr class="bg-muted border-b">
+							<th class="px-3 py-2 text-right font-medium">#</th>
+							<th class="px-3 py-2 text-left font-medium whitespace-nowrap">Agent</th>
+							{#each data.maps as map}
+								<th class="px-3 py-2 text-right font-medium font-mono whitespace-nowrap text-xs">{map}</th>
+							{/each}
+							<th class="px-3 py-2 text-right font-medium whitespace-nowrap">FTS</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.ranking as entry}
+							<tr class="border-b last:border-0 {entry.rank === 1 ? 'bg-yellow-50 dark:bg-yellow-950/20' : entry.rank === 2 ? 'bg-gray-50 dark:bg-gray-900/20' : entry.rank === 3 ? 'bg-orange-50 dark:bg-orange-950/20' : ''}">
+								<td class="px-3 py-2 text-right font-medium tabular-nums">
+									{entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : entry.rank}
+								</td>
+								<td class="px-3 py-2 font-mono whitespace-nowrap">{entry.agent}</td>
+								{#each data.maps as map}
+									{@const tp = entry.tpByMap[map] ?? 0}
+									{@const hasScore = data.scores[entry.agent]?.[map] != null}
+									<td class="px-3 py-2 text-right tabular-nums {hasScore ? '' : 'text-muted-foreground'}">
+										{hasScore ? tp : '—'}
+									</td>
+								{/each}
+								<td class="px-3 py-2 text-right font-semibold tabular-nums">{entry.fts}</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</section>
+	{/if}
+
 	<!-- Agent × Map matrix -->
 	<div class="overflow-x-auto rounded-lg border">
 		<table class="text-sm">

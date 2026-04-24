@@ -6,6 +6,7 @@ import { env } from '$env/dynamic/private';
 import { error, fail } from '@sveltejs/kit';
 import { can } from '$lib/auth';
 import { getWorkflowTemplates } from '$lib/config';
+import { computeCompetitionRanking } from '$lib/scoring';
 import type { Actions, PageServerLoad } from './$types';
 import type { Competition, CompetitionRun } from '$lib/db';
 
@@ -59,7 +60,18 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		agentTemplates[run.agent] = run.template;
 	}
 
-	return { competition, runs, agents, maps, workflowStatus, agentTemplates, namespace: env.ARGO_NAMESPACE ?? 'argo' };
+	// Build scores map: agent → map → numeric score (null if not yet available)
+	const scores: Record<string, Record<string, number | null>> = {};
+	for (const run of runs) {
+		if (!scores[run.agent]) scores[run.agent] = {};
+		const status = run.workflow_name ? workflowStatus[run.workflow_name] : null;
+		const raw = status?.score ?? null;
+		scores[run.agent][run.map] = raw != null ? parseFloat(raw) : null;
+	}
+
+	const ranking = computeCompetitionRanking(agents, maps, scores);
+
+	return { competition, runs, agents, maps, workflowStatus, agentTemplates, scores, ranking, namespace: env.ARGO_NAMESPACE ?? 'argo' };
 };
 
 export const actions: Actions = {
