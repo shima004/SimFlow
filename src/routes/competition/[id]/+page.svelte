@@ -80,7 +80,25 @@
 				{data.agents.length} agents × {data.maps.length} maps = {data.runs.length} runs
 			</p>
 		</div>
-		<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Refresh</Button>
+		<div class="flex gap-2">
+			{#if can(role, 'admin')}
+				<a
+					href="/api/competition/{data.competition.id}/logs?type=simscope"
+					download="competition-{data.competition.id}-simscope.zip"
+					class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent"
+				>
+					Download Rescue Logs
+				</a>
+				<a
+					href="/api/competition/{data.competition.id}/logs"
+					download="competition-{data.competition.id}-logs.zip"
+					class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent"
+				>
+					Download All Logs
+				</a>
+			{/if}
+			<Button variant="outline" size="sm" onclick={() => invalidateAll()}>Refresh</Button>
+		</div>
 	</div>
 
 	<!-- Shared resource settings (manage only) -->
