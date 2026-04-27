@@ -5,6 +5,7 @@ const SDC = 2;
 export type RankingEntry = {
 	agent: string;
 	fts: number;
+	totalScore: number;
 	rank: number;
 	tpByMap: Record<string, number>;
 };
@@ -61,15 +62,20 @@ export function computeCompetitionRanking(
 		}
 	}
 
-	// Sort by FTS descending
+	// Sort by FTS descending, then by total raw score as tiebreaker
 	const sorted = [...agents]
-		.map((agent) => ({ agent, fts: agentFTS[agent], tpByMap: agentTPByMap[agent] }))
-		.sort((a, b) => b.fts - a.fts);
+		.map((agent) => {
+			const totalScore = maps.reduce((sum, map) => sum + (scores[agent]?.[map] ?? 0), 0);
+			return { agent, fts: agentFTS[agent], totalScore, tpByMap: agentTPByMap[agent] };
+		})
+		.sort((a, b) => b.fts - a.fts || b.totalScore - a.totalScore);
 
-	// Assign ranks (ties share the same rank)
+	// Assign ranks (same rank only when both FTS and totalScore are equal)
 	let rank = 1;
 	return sorted.map((entry, i) => {
-		if (i > 0 && entry.fts < sorted[i - 1].fts) rank = i + 1;
+		if (i > 0 && (entry.fts < sorted[i - 1].fts || entry.totalScore < sorted[i - 1].totalScore)) {
+			rank = i + 1;
+		}
 		return { ...entry, rank };
 	});
 }

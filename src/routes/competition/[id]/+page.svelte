@@ -152,6 +152,7 @@
 								<th class="px-3 py-2 text-right font-medium font-mono whitespace-nowrap text-xs">{map}</th>
 							{/each}
 							<th class="px-3 py-2 text-right font-medium whitespace-nowrap">FTS</th>
+							<th class="px-3 py-2 text-right font-medium whitespace-nowrap text-muted-foreground">Total Score</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -169,6 +170,7 @@
 									</td>
 								{/each}
 								<td class="px-3 py-2 text-right font-semibold tabular-nums">{entry.fts}</td>
+								<td class="px-3 py-2 text-right tabular-nums text-muted-foreground text-xs">{entry.totalScore.toFixed(2)}</td>
 							</tr>
 						{/each}
 					</tbody>
